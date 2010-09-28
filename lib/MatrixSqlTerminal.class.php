@@ -1,6 +1,6 @@
 <?php
-require_once('lib/SimpleReadline.class.php');
-require_once('lib/ArrayToTextTable.class.php');
+require_once(dirname(__FILE__) . '/SimpleReadline.class.php');
+require_once(dirname(__FILE__) . '/ArrayToTextTable.class.php');
 require_once $SYSTEM_ROOT.'/fudge/dev/dev.inc';
 require_once $SYSTEM_ROOT.'/core/include/general.inc';
 require_once $SYSTEM_ROOT.'/core/lib/DAL/DAL.inc';
@@ -27,10 +27,9 @@ class MatrixSqlTerminal {
 		// Switch the term to (mostly) raw mode
 		system("stty raw opost -olcuc -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo");
 
-
 		// Load database DSN from Matrix's db.inc
-		$this->dsn = $db_conf['db2'];
-		$this->db_type = $db_conf['db2']['type'];
+		$this->dsn = $GLOBALS['db_conf']['db2'];
+		$this->db_type = $GLOBALS['db_conf']['db2']['type'];
 		
 		// Attempt to connect
 		MatrixDAL::dbConnect($this->dsn, $this->db_type);
@@ -55,13 +54,13 @@ class MatrixSqlTerminal {
 		$sql = '';
 		
 		echo "Welcome to matrixsqlclient (alpha), the interative database terminal in PHP." . "\n" . "\n";
-		echo "You are now connected." . "\n" . "Database type: " . $db_type . "." . "\n";
+		echo "You are now connected." . "\n" . "Database type: " . $this->db_type . "." . "\n";
 		
 		
 		while (1) {
 		
 			// Prompt for input
-			$line = $shell->readline($db_conf['db2']['DSN'] . $prompt);
+			$line = $shell->readline($this->dsn['DSN'] . $prompt);
 		
 		//	echo "\ndebug: line: " . $line . "\n";
 		
@@ -91,7 +90,7 @@ class MatrixSqlTerminal {
 					$shell->readline_add_history($sql);
 					
 					// Strip semicolon from end if its Oracle
-					if ($db_type == 'oci') {
+					if ($this->db_type == 'oci') {
 						$sql = substr($sql, 0, strlen($sql)-1);
 					}
 					

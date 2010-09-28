@@ -68,7 +68,7 @@ class SimpleReadline {
 		
 		// Output prompt
 		if ($prompt !== NULL) {
-			echo NL . $prompt;
+			echo "\n" . $prompt;
 		}
 		
 		while (1) {
@@ -79,12 +79,12 @@ class SimpleReadline {
 		
 			switch ($c) {
 
-				// Home - move the cursor all the way to the left
+				// CTRL-A (Home) - move the cursor all the way to the left
 				case chr(1):
 					$this->cursorLeft($this->buffer_position);
 					break;
 
-				// End - move cursor all the way to the end
+				// CTRL-E (End) - move cursor all the way to the end
 				case chr(5):
 					$this->cursorRight(strlen($this->buffer) - $this->buffer_position);
 					break;
@@ -114,12 +114,12 @@ class SimpleReadline {
 
 				case LEFT:
 					// Move left, or beep if we're already at the beginning
-					if (!$this->cursorMoveLeft()) $this->bell();
+					if (!$this->cursorLeft()) $this->bell();
 					break;
 
 				case RIGHT:
 					// Move right, or beep if we're already at the end
-					if (!$this->cursorMoveLeft()) $this->bell();
+					if (!$this->cursorRight()) $this->bell();
 					break;
 
 				// Backspace key was pressed
@@ -179,7 +179,7 @@ class SimpleReadline {
 			if ($line !== NULL) {
 			
 				// Special SimpleReadline commands
-				if (strpos(trim($line) == "\debug"), 0, 6) {
+				if (substr(trim($line), 0, 6) == "\debug") {
 
 					if ($this->debug) {
 						echo "\ndebug mode off.\n";
@@ -196,7 +196,7 @@ class SimpleReadline {
 					$this->reset();
 
 					if ($prompt !== NULL) {
-						echo NL . $prompt;
+						echo "\n" . $prompt;
 					}
 
 				} elseif (trim($line) == "\history") {
@@ -213,7 +213,7 @@ class SimpleReadline {
 					$this->reset();
 
 					if ($prompt !== NULL) {
-						echo NL . $prompt;
+						echo "\n" . $prompt;
 					}
 				}
 
@@ -288,7 +288,7 @@ class SimpleReadline {
 	 * Alias of addHistoryItem for historical purposes.
 	 */	
 	public function readline_add_history($line) {
-		return addHistoryItem($line);
+		return $this->addHistoryItem($line);
 	}
 
 	/**
@@ -309,7 +309,7 @@ class SimpleReadline {
     		$this->history_position = $this->history_position + $n;
 	
 	   		// Clear current line
-	   		$this->cursorEnd();
+	   		$this->cursorRight($this->buffer_position);
 	   		$this->backspace(strlen($this->buffer));
 	
 	   		// Print history item and set buffer
@@ -340,7 +340,7 @@ class SimpleReadline {
 		if ($this->buffer_position > 0) {
 
 			$this->buffer_position = $this->buffer_position - $n;
-			for ($i=0; $i<$n; $i++) echo chr(8);
+			TerminalDisplay::left($n);
 
 			return true;
 
@@ -359,10 +359,10 @@ class SimpleReadline {
 
 		if ($this->buffer_position < strlen($this->buffer)) {
 
-    		for ($i=0; $i<$n; $i++) {
-    			echo $this->buffer[$this->buffer_position];
-    			$this->buffer_position++;
-    		}
+			for ($i=0; $i<$n; $i++) {
+				echo $this->buffer[$this->buffer_position];
+				$this->buffer_position++;
+			}
 
     		return true;
 
@@ -385,23 +385,32 @@ class SimpleReadline {
 			// We can't backspace this far
 			return false;
 
-		} else {
+		}
+		elseif ($this->buffer_position < strlen($this->buffer)) {
 
-			// Move cursor left
-			$this->cursorLeft($n);
+			$head = substr($this->buffer, 0, $this->buffer_position);
+			$tail = substr($this->buffer, $this->buffer_position, strlen($this->buffer));
 			
-			// Remove proceeding character from buffer
-			$this->buffer = (substr($this->buffer, 0, $this->buffer_position)) . (substr($this->buffer, $this->buffer_position + $n, strlen($buffer)));
+			TerminalDisplay::backspace();
+			echo $tail . ' ';
+			TerminalDisplay::left(strlen($tail)+1);
 			
-			// Reprint the rest of the line + one blank char
-			$taillen = strlen($this->buffer) - $this->buffer_position;
-			$this->cursorRight($taillen);
-			echo " ";		
-			
-			// Go back to where we were
-			$this->cursorLeft($taillen);
+			// Update buffer
+			$this->buffer = substr($head, 0, strlen($head)-1) . $tail;
+		}
+		else {
 
-			return true;
+			// Just backspace one char
+			$this->buffer = substr($this->buffer, 0, strlen($this->buffer)-1);
+			TerminalDisplay::backspace();
+		}
+
+    	$this->buffer_position--;
+    	
+		// Updated temp history item
+    	$this->historyItemModified();
+			
+		return true;
 	}
 
 	/**
@@ -409,6 +418,20 @@ class SimpleReadline {
 	 */
 	private function bell() {
 		echo chr(7);
+	}
+
+}
+
+class TerminalDisplay {
+
+	public static function left($count=1) {
+		for ($i=0; $i<$count; $i++) echo chr(8);
+	}
+	
+	public static function backspace($count=1) {
+		self::left($count);
+		for ($i=0; $i<$count; $i++) echo ' ';
+		self::left($count);
 	}
 
 }

@@ -142,7 +142,7 @@ class ArrayToTextTable
                 str_pad('', $val, $this->prow, STR_PAD_RIGHT) .
                 $this->prow .
                 $this->pcen;
-        if($nl) print NL;
+        if($nl) print "\n";
     }
 
     private function printHeading()
@@ -156,7 +156,7 @@ class ArrayToTextTable
                 ' ' .
                 $this->pcol;
 
-        print NL;
+        print "\n";
         $this->printLine();
     }
 
@@ -172,7 +172,7 @@ class ArrayToTextTable
                 print str_pad(substr($this->rows[$rowKey][$this->keys[$colKey]], ($this->mW * ($line-1)), $this->mW), $this->cs[$colKey], ' ', STR_PAD_RIGHT);
                 print " " . $this->pcol;          
             }  
-            print NL;
+            print "\n";
         }
     }
 
