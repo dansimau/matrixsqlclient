@@ -11,12 +11,17 @@ class MatrixSqlTerminal {
 	 */
 	private $db_type = '';
 
+	/*
+	 * @var $tty_saved Stores stty string of saved terminal settings
+	 */
+	private $tty_saved = '';
+
 	/**
 	 * Constructor - initialises Matrix DAL and attempts to connect to database
 	 */
 	public function __construct() {
 
-		$this->resetTerminal();
+		$this->resetTerminal(true);
 
 		// Load database DSN from Matrix's db.inc
 		$this->dsn = $GLOBALS['db_conf']['db2'];
@@ -31,7 +36,7 @@ class MatrixSqlTerminal {
 	 * Destructor function - should restore terminal settings
 	 */
 	public function __destruct() {
-		system("stty sane");
+		$this->restoreTerminal();
 	}
 	
 	/**
@@ -137,7 +142,21 @@ class MatrixSqlTerminal {
 	 * @param bool whether or not to save the existing terminal settings for restoring later
 	 */
 	public function resetTerminal($save_existing=FALSE) {
+
+		// Save existing settings
+		if ($save_existing) {
+			$this->tty_saved = `stty -g`;
+		}
+
+		// Reset terminal
 		system("stty raw opost -olcuc -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef");
+	}
+
+	/**
+	 * Restores the terminal to the previously saved state.
+	 */
+	public function restoreTerminal() {
+		system("stty '" . trim($this->tty_saved) . "'");
 	}
 }
 ?>
