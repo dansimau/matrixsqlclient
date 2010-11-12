@@ -88,12 +88,18 @@ class MatrixSqlTerminal {
 					
 					// Run the SQL
 					$source_data = MatrixDAL::executeSqlAssoc($sql);
-			
-					$output = new ArrayToTextTable($source_data);
-					$output->showHeaders(true);
-			
-					echo "\n" . "\n";
-					$output->render();
+
+					echo "\n";
+
+					// Only render the table if rows were returned
+					if (!empty($source_data)) {
+
+						$output = new ArrayToTextTable($source_data);
+						$output->showHeaders(true);
+				
+						echo "\n";
+						$output->render();
+					}
 					
 					echo "\n" . "(" . count($source_data) . " row";
 					if (count($source_data) !== 1) echo "s";
