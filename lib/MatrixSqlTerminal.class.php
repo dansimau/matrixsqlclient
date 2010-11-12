@@ -60,9 +60,15 @@ class MatrixSqlTerminal {
 		
 		//	echo "\ndebug: line: " . $line . "\n";
 		
-			// CTRL-D quits
-			if ((substr($line, 0, 4) == 'exit') || (substr($line, 0, 4) == 'quit') || substr($line, strlen($line)-1, strlen($line)) === chr(4)) {
+			// Exits
+			if ((substr($line, 0, 4) == 'exit') || (substr($line, 0, 4) == 'quit')) {
 				echo "\n";
+				exit;
+			}
+			
+			// CTRL-D
+			if (substr($line, strlen($line)-1, strlen($line)) === chr(4)) {
+				echo "\q\n";
 				exit;
 			}
 			

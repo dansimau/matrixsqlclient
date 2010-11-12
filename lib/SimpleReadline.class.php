@@ -110,6 +110,9 @@ class SimpleReadline {
 					break;
 
 				case chr(3):	// CTRL-C
+						$line = $this->buffer . $c;
+						break;
+
 				case chr(4):	// CTRL-D
 				
 					// Return current line immediately, with control character code on the end
