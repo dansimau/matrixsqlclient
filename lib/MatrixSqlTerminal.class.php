@@ -16,8 +16,7 @@ class MatrixSqlTerminal {
 	 */
 	public function __construct() {
 
-		// Switch the term to (mostly) raw mode
-		system("stty raw opost -olcuc -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo");
+		$this->resetTerminal();
 
 		// Load database DSN from Matrix's db.inc
 		$this->dsn = $GLOBALS['db_conf']['db2'];
@@ -131,6 +130,14 @@ class MatrixSqlTerminal {
 			}
 		}
 	}
-
+	
+	/**
+	 * Gets the terminal ready for our own use (switch it to raw mode).
+	 *
+	 * @param bool whether or not to save the existing terminal settings for restoring later
+	 */
+	public function resetTerminal($save_existing=FALSE) {
+		system("stty raw opost -olcuc -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef");
+	}
 }
 ?>

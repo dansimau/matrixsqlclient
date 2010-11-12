@@ -1,4 +1,20 @@
 <?php
+// Install signal handler (if possible)
+if (function_exists("pcntl_signal")) {
+	declare(ticks = 1);
+
+	function sig_handler($signal) {
+		global $matrixSqlTerminal;
+		switch ($signal) {
+			// Reset the terminal again when the process is unfrozen
+			case SIGCONT:
+				$matrixSqlTerminal->resetTerminal();
+				break;
+		}
+	}
+	pcntl_signal(SIGCONT, "sig_handler");
+}
+
 // TODO: These constants are for SimpleReadline - need to move them into there
 define('UP', chr(27).chr(91).chr(65));
 define('DOWN', chr(27).chr(91).chr(66));

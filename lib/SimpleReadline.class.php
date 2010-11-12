@@ -5,6 +5,9 @@
  * @author Daniel Simmons <dan@dans.im>
  * @copyright Copyright (C) 2010 Daniel Simmons
  */
+
+//system("stty raw opost -olcuc -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef");
+
 class SimpleReadline {
 
 	/**
@@ -58,9 +61,6 @@ class SimpleReadline {
 
 		$this->reset();
 	
-		// Turn off echoing on the tty. We're going to control this.
-		system("stty raw opost -olcuc -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo");
-		
 		// Output prompt
 		if ($prompt !== NULL) {
 			echo "\n" . $prompt;
@@ -220,9 +220,6 @@ class SimpleReadline {
 
 				// Remove temp history item
 				array_pop($this->history);
-
-				// Restore original tty settings
-				system('stty sane');
 
 				return $line;
 			}
@@ -423,7 +420,6 @@ class SimpleReadline {
 	private function bell() {
 		echo chr(7);
 	}
-
 }
 
 class TerminalDisplay {
