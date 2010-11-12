@@ -1,12 +1,4 @@
 <?php
-require_once(dirname(__FILE__) . '/SimpleReadline.class.php');
-require_once(dirname(__FILE__) . '/ArrayToTextTable.class.php');
-require_once $SYSTEM_ROOT.'/fudge/dev/dev.inc';
-require_once $SYSTEM_ROOT.'/core/include/general.inc';
-require_once $SYSTEM_ROOT.'/core/lib/DAL/DAL.inc';
-require_once $SYSTEM_ROOT.'/core/lib/MatrixDAL/MatrixDAL.inc';
-require_once $SYSTEM_ROOT.'/data/private/conf/db.inc';
-
 class MatrixSqlTerminal {
 
 	/**

@@ -1,9 +1,4 @@
 <?php
-define('UP', chr(27).chr(91).chr(65));
-define('DOWN', chr(27).chr(91).chr(66));
-define('RIGHT', chr(27).chr(91).chr(67));
-define('LEFT', chr(27).chr(91).chr(68));
-
 /**
  * Alternative readline library.
  *
@@ -92,7 +87,15 @@ class SimpleReadline {
 				// Line-delete - backspace from current position to beginning of line
 				case chr(21):
 					$this->backspace($this->buffer_position);
-					$this->historyItemModified();
+					break;
+
+				// Word-delete (CTRL-W)
+				case chr(23):
+					if (!strrpos($this->buffer, ' ', strlen($this->buffer)-$this->buffer_position)) {
+						$this->backspace($this->buffer_position);
+					} else {
+						$this->backspace(strlen($this->buffer)-strrpos($this->buffer, ' ', strlen($this->buffer)-$this->buffer_position));
+					}
 					break;
 
 				case chr(3):	// CTRL-C
@@ -126,9 +129,7 @@ class SimpleReadline {
 				case chr(8):
 				case chr(127):	// Delete
 
-					if ($this->backspace()) {
-						$this->historyItemModified();
-					} else {
+					if (!$this->backspace()) {
 						self::bell();
 					}
 					break;
@@ -386,29 +387,32 @@ class SimpleReadline {
 			return false;
 
 		}
-		elseif ($this->buffer_position < strlen($this->buffer)) {
 
-			$head = substr($this->buffer, 0, $this->buffer_position);
-			$tail = substr($this->buffer, $this->buffer_position, strlen($this->buffer));
-			
-			TerminalDisplay::backspace();
-			echo $tail . ' ';
-			TerminalDisplay::left(strlen($tail)+1);
-			
-			// Update buffer
-			$this->buffer = substr($head, 0, strlen($head)-1) . $tail;
+		for ($i=0; $i<$n; $i++) {
+			if ($this->buffer_position < strlen($this->buffer)) {
+	
+				$head = substr($this->buffer, 0, $this->buffer_position);
+				$tail = substr($this->buffer, $this->buffer_position, strlen($this->buffer));
+				
+				TerminalDisplay::backspace();
+				echo $tail . ' ';
+				TerminalDisplay::left(strlen($tail)+1);
+				
+				// Update buffer
+				$this->buffer = substr($head, 0, strlen($head)-1) . $tail;
+			}
+			else {
+	
+				// Just backspace one char
+				$this->buffer = substr($this->buffer, 0, strlen($this->buffer)-1);
+				TerminalDisplay::backspace();
+			}
+	
+			$this->buffer_position--;
 		}
-		else {
-
-			// Just backspace one char
-			$this->buffer = substr($this->buffer, 0, strlen($this->buffer)-1);
-			TerminalDisplay::backspace();
-		}
-
-    	$this->buffer_position--;
     	
 		// Updated temp history item
-    	$this->historyItemModified();
+		$this->historyItemModified();
 			
 		return true;
 	}
