@@ -76,7 +76,7 @@ class MatrixSqlTerminal {
 			// the SQL!
 			if (strpos($sql, ';')) {
 				try {
-					trim($sql);
+					$sql = trim($sql);
 		
 					// Add this command to the history
 					$shell->readline_add_history($sql);
@@ -91,19 +91,28 @@ class MatrixSqlTerminal {
 
 					echo "\n";
 
-					// Only render the table if rows were returned
-					if (!empty($source_data)) {
-
-						$output = new ArrayToTextTable($source_data);
-						$output->showHeaders(true);
-				
-						echo "\n";
-						$output->render();
+					// UPDATE
+					if (strtolower(substr($sql, 0, 6)) == "update") {
+						echo "UPDATE " . count($source_data);
 					}
+
+					// SELECT
+					else {
+
+						// Only render the table if rows were returned
+						if (!empty($source_data)) {
+	
+							$output = new ArrayToTextTable($source_data);
+							$output->showHeaders(true);
 					
-					echo "\n" . "(" . count($source_data) . " row";
-					if (count($source_data) !== 1) echo "s";
-					echo ")" . "\n";
+							echo "\n";
+							$output->render();
+						}
+						
+						echo "\n" . "(" . count($source_data) . " row";
+						if (count($source_data) !== 1) echo "s";
+						echo ")" . "\n";
+					}
 			
 					unset($output);
 				}
