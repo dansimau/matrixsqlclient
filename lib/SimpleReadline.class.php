@@ -16,6 +16,11 @@ class SimpleReadline {
 	private $history = array();
 	
 	/**
+	 * @var Stores a working copy the command line history.
+	 */
+	private $history_tmp = array();
+	
+	/**
 	 * @var Stores the current position in the command line history.
 	 */
 	private $history_position = -1;
@@ -40,12 +45,14 @@ class SimpleReadline {
 	 */
 	private function reset() {
 
+		// Reset buffer
 		$this->buffer = '';
 		$this->buffer_position = 0;
 
-		$this->history[] = '';
-		$this->history_position = count($this->history) - 1;
-
+		// Reset working history
+		$this->history_tmp = $this->history;
+		$this->history_tmp[] = '';
+		$this->history_position = count($this->history);
 	}
 	
 	/**
@@ -70,7 +77,11 @@ class SimpleReadline {
 		
 			$c = self::readKey();
 		
-			if ($this->debug) echo "\ndebug: keypress: " . ord($c) . "\n";
+			if ($this->debug) {
+				echo "\ndebug: keypress:";
+				for ($i=0; $i<strlen($c); $i++) echo " " . ord($c[$i]);
+				echo "\n";
+			}
 		
 			switch ($c) {
 
@@ -102,7 +113,13 @@ class SimpleReadline {
 				case chr(4):	// CTRL-D
 				
 					// Return current line immediately, with control character code on the end
-					$line = $this->buffer . $c;
+					if (strlen($this->buffer) === 0) {
+						$line = $this->buffer . $c;
+					}
+					// Unless there is data in the buffer
+					else {
+						$this->bell();
+					}
 					break;
 
 				case UP:
@@ -167,13 +184,17 @@ class SimpleReadline {
 					}
 
 					$this->buffer_position++;
-					$this->history[$this->history_position] = $this->buffer;
+					$this->history_tmp[$this->history_position] = $this->buffer;
 			}
 
 			if ($this->debug) {
 				echo "\ndebug: buffer length  : " . strlen($this->buffer) . "\n";
 				echo "debug: buffer contents: " . $this->buffer . "\n";
 				echo "debug: buffer position: " . $this->buffer_position . "\n";
+				
+				echo "\ndebug: history: position: " . $this->history_position . "\n";
+				echo "debug: history: item: " . $this->history_tmp[$this->history_position] . "\n";
+				var_dump($this->history_tmp);
 			}
 				
 			// If $line has been set, return it
@@ -191,7 +212,10 @@ class SimpleReadline {
 						echo "\ndebug mode on.\n";
 						$this->debug = TRUE;
 					}
-					
+
+					// Add item to history
+					$this->addHistoryItem($line);
+
 					// Reset everything
 					$line = NULL;
 					$this->reset();
@@ -209,6 +233,9 @@ class SimpleReadline {
 						echo $i+1 . ". " . $this->history[$i] . "\n";
 					}
 
+					// Add item to history
+					$this->addHistoryItem($line);
+
 					// Reset everything
 					$line = NULL;
 					$this->reset();
@@ -219,7 +246,7 @@ class SimpleReadline {
 				}
 
 				// Remove temp history item
-				array_pop($this->history);
+				array_pop($this->history_tmp);
 
 				return $line;
 			}
@@ -238,9 +265,9 @@ class SimpleReadline {
 		$key = NULL;
 
 		while (1) {
-		
-			$c = fgetc(STDIN);
 
+			$c = fgetc(STDIN);
+			
 			// If we received ESC character, we're expecting a control character (more
 			// chars) so create a buffer and read another character
 			if (ord($c) === 27) {
@@ -279,7 +306,7 @@ class SimpleReadline {
 	 * @return bool Returns TRUE on success or FALSE on failure.
 	 */
 	public function addHistoryItem($line) {
-		return $this->history[] = trim($line);
+		return ($this->history[] = trim($line));
 	}
 
 	/**
@@ -297,22 +324,22 @@ class SimpleReadline {
 	private function historyMovePosition($n) {
 
 		// Check we can actually move this far
-		if (!array_key_exists($this->history_position + $n, $this->history)) {
+		if (!array_key_exists($this->history_position + $n, $this->history_tmp)) {
 		
     		return false;
 
     	} else {
-    	
+
+	   		// Clear current line
+	   		$this->cursorRight(strlen($this->buffer) - $this->buffer_position);
+	   		$this->backspace($this->buffer_position);
+
     		// Move forward/back n number of positions
     		$this->history_position = $this->history_position + $n;
 	
-	   		// Clear current line
-	   		$this->cursorRight($this->buffer_position);
-	   		$this->backspace(strlen($this->buffer));
-	
 	   		// Print history item and set buffer
-	   		echo $this->history[$this->history_position];
-	   		$this->buffer = $this->history[$this->history_position];
+			echo $this->history_tmp[$this->history_position];
+	   		$this->buffer = $this->history_tmp[$this->history_position];
 	   		$this->buffer_position = strlen($this->buffer);
 	   		
 	   		return true;
@@ -324,7 +351,7 @@ class SimpleReadline {
 	 * Updates the current history item with new data from buffer
 	 */
 	private function historyItemModified() {
-		$this->history[$this->history_position] = $this->buffer;
+		$this->history_tmp[$this->history_position] = $this->buffer;
 	}
 
 	/**
@@ -408,9 +435,6 @@ class SimpleReadline {
 			$this->buffer_position--;
 		}
     	
-		// Updated temp history item
-		$this->historyItemModified();
-			
 		return true;
 	}
 
