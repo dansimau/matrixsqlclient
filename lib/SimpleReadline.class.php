@@ -180,7 +180,7 @@ class SimpleReadline {
 						TerminalDisplay::xoff();
 						echo $c . $tail;
 						TerminalDisplay::left(strlen($tail));
-						TerminalDisplay::on();
+						TerminalDisplay::xon();
 						$this->buffer = $head . $c . $tail;
 
 					} else {
