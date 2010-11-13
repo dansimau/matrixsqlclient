@@ -11,9 +11,6 @@
  */
 class MatrixSqlTerminal {
 
-	const XON	= 16;
-	const XOFF	= 19;
-
 	/**
 	 * @var $dsn Database connection string
 	 */
@@ -74,8 +71,12 @@ class MatrixSqlTerminal {
 
 		$prompt = '=# ';
 		$sql = '';
-		
-		$this->output("Welcome to matrixsqlclient (alpha), the interative database terminal in PHP.\n\nYou are now connected.\nDatabase type: " . $this->db_type . ".\n");
+
+		ob_start();
+		echo "Welcome to matrixsqlclient (alpha), the interative database terminal in PHP.";
+		echo "\n\nYou are now connected.";
+		echo "\nDatabase type: " . $this->db_type . ".\n";
+		ob_end_flush();
 		
 		while (1) {
 		
@@ -191,7 +192,7 @@ class MatrixSqlTerminal {
 		}
 
 		// Reset terminal
-		system("stty raw opost -olcuc -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef ixoff ixon");
+		system("stty raw opost -olcuc -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef");
 	}
 
 	/**

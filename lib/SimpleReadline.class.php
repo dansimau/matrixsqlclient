@@ -75,7 +75,7 @@ class SimpleReadline {
 		
 		while (1) {
 		
-			$c = self::read_key();
+			$c = self::readKey();
 		
 			if ($this->debug) {
 				echo "\ndebug: keypress:";
@@ -177,11 +177,11 @@ class SimpleReadline {
 						$head = substr($this->buffer, 0, $this->buffer_position);
 						$tail = substr($this->buffer, $this->buffer_position, strlen($this->buffer));
 						
-						TerminalDisplay::xoff();
+						ob_start();
 						echo $c . $tail;
 						TerminalDisplay::left(strlen($tail));
-						TerminalDisplay::xon();
 						$this->buffer = $head . $c . $tail;
+						ob_end_flush();
 
 					} else {
 
@@ -265,7 +265,7 @@ class SimpleReadline {
 	 *
 	 * @return Returns a string containing a character or set of control characters.
 	 */
-	private static function read_key() {
+	private static function readKey() {
 	
 		$buffer = NULL;
 		$key = NULL;
@@ -336,7 +336,7 @@ class SimpleReadline {
 
     	} else {
 
-			TerminalDisplay::xoff();
+			ob_start();
 
 	   		// Clear current line
 	   		$this->cursorRight(strlen($this->buffer) - $this->buffer_position);
@@ -350,7 +350,7 @@ class SimpleReadline {
 	   		$this->buffer = $this->history_tmp[$this->history_position];
 	   		$this->buffer_position = strlen($this->buffer);
 	   		
-	   		TerminalDisplay::xon();
+	   		ob_end_flush();
 	   		
 	   		return true;
     	}
@@ -458,9 +458,6 @@ class SimpleReadline {
 
 class TerminalDisplay {
 
-	const XON	= 16;
-	const XOFF	= 19;
-
 	public static function left($count=1) {
 		for ($i=0; $i<$count; $i++) echo chr(8);
 	}
@@ -469,18 +466,6 @@ class TerminalDisplay {
 		self::left($count);
 		for ($i=0; $i<$count; $i++) echo ' ';
 		self::left($count);
-	}
-	
-	public static function output($text) {
-		echo chr(self::XOFF) . $text . chr(self::XON);
-	}
-	
-	public static function xoff() {
-		echo chr(self::XOFF);
-	}
-
-	public static function xon() {
-		echo chr(self::XON);
 	}
 }
 ?>
