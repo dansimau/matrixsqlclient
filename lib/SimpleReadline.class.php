@@ -75,7 +75,7 @@ class SimpleReadline {
 		
 		while (1) {
 		
-			$c = self::readKey();
+			$c = self::read_key();
 		
 			if ($this->debug) {
 				echo "\ndebug: keypress:";
@@ -87,12 +87,12 @@ class SimpleReadline {
 
 				// CTRL-A (Home) - move the cursor all the way to the left
 				case chr(1):
-					$this->cursorLeft($this->buffer_position);
+					$this->cursor_left($this->buffer_position);
 					break;
 
 				// CTRL-E (End) - move cursor all the way to the end
 				case chr(5):
-					$this->cursorRight(strlen($this->buffer) - $this->buffer_position);
+					$this->cursor_right(strlen($this->buffer) - $this->buffer_position);
 					break;
 				
 				// Line-delete - backspace from current position to beginning of line
@@ -127,22 +127,22 @@ class SimpleReadline {
 
 				case UP:
 					// Move backwards in the history (or beep if we can't)
-					if (!$this->historyMovePosition(-1)) $this->bell();
+					if (!$this->history_move_position(-1)) $this->bell();
 					break;
 
 				case DOWN:
 					// Move forward in the history (or beep if we can't)
-					if (!$this->historyMovePosition(1)) $this->bell();					
+					if (!$this->history_move_position(1)) $this->bell();					
 					break;
 
 				case LEFT:
 					// Move left, or beep if we're already at the beginning
-					if (!$this->cursorLeft()) $this->bell();
+					if (!$this->cursor_left()) $this->bell();
 					break;
 
 				case RIGHT:
 					// Move right, or beep if we're already at the end
-					if (!$this->cursorRight()) $this->bell();
+					if (!$this->cursor_right()) $this->bell();
 					break;
 
 				// Backspace key was pressed
@@ -205,10 +205,10 @@ class SimpleReadline {
 			if ($line !== NULL) {
 			
 				// Firstly check for and process internal SimpleReadline commands
-				if ($this->processInternalCommand(trim($line))) {
+				if ($this->process_internal_command(trim($line))) {
 
 					// Command was executed, so add it to history, reset and start again
-					$this->addHistoryItem($line);
+					$this->add_history_item($line);
 					$line = NULL;
 					$this->reset();
 				}
@@ -221,7 +221,7 @@ class SimpleReadline {
 		}
 	}
 
-	private function processInternalCommand($command) {
+	private function process_internal_command($command) {
 
 		// debug command
 		if (substr($command, 0, 2) === "\d") {
@@ -262,7 +262,7 @@ class SimpleReadline {
 	 *
 	 * @return Returns a string containing a character or set of control characters.
 	 */
-	private static function readKey() {
+	private static function read_key() {
 	
 		$buffer = NULL;
 		$key = NULL;
@@ -308,15 +308,15 @@ class SimpleReadline {
 	 * @param string The line to be added in the history.
 	 * @return bool Returns TRUE on success or FALSE on failure.
 	 */
-	public function addHistoryItem($line) {
+	public function add_history_item($line) {
 		return ($this->history[] = trim($line));
 	}
 
 	/**
-	 * Alias of addHistoryItem for historical purposes.
+	 * Alias of add_history_item for historical purposes.
 	 */	
 	public function readline_add_history($line) {
-		return $this->addHistoryItem($line);
+		return $this->add_history_item($line);
 	}
 
 	/**
@@ -324,7 +324,7 @@ class SimpleReadline {
 	 *
 	 * @param Integer specifying how many places to move up/down in the history
 	 */
-	private function historyMovePosition($n) {
+	private function history_move_position($n) {
 
 		// Check we can actually move this far
 		if (!array_key_exists($this->history_position + $n, $this->history_tmp)) {
@@ -334,7 +334,7 @@ class SimpleReadline {
     	} else {
 
 	   		// Clear current line
-	   		$this->cursorRight(strlen($this->buffer) - $this->buffer_position);
+	   		$this->cursor_right(strlen($this->buffer) - $this->buffer_position);
 	   		$this->backspace($this->buffer_position);
 
     		// Move forward/back n number of positions
@@ -353,7 +353,7 @@ class SimpleReadline {
 	/**
 	 * Updates the current history item with new data from buffer
 	 */
-	private function historyItemModified() {
+	private function history_item_modified() {
 		$this->history_tmp[$this->history_position] = $this->buffer;
 	}
 
@@ -362,7 +362,7 @@ class SimpleReadline {
 	 *
 	 * @param The number of characters left to move the cursor.
 	 */
-	private function cursorLeft($n=1) {
+	private function cursor_left($n=1) {
 
 		// Move cursor left if we can
 		if ($this->buffer_position > 0) {
@@ -383,7 +383,7 @@ class SimpleReadline {
 	 * @param Number of characters to the right to move the cursor.
 	 * @return boolean Whether or not the cursor was able to be moved to the right
 	 */
-	private function cursorRight($n=1) {
+	private function cursor_right($n=1) {
 
 		if ($this->buffer_position < strlen($this->buffer)) {
 

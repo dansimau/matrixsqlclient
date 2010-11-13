@@ -41,7 +41,7 @@ class MatrixSqlTerminal {
 	 */
 	public function __construct() {
 
-		$this->resetTerminal(true);
+		$this->reset_terminal(true);
 
 		// Load database DSN from Matrix's db.inc
 		$this->dsn = $GLOBALS['db_conf']['db2'];
@@ -54,14 +54,14 @@ class MatrixSqlTerminal {
 		// Instantiate/initialise stuff
 		$this->shell = new SimpleReadline();
 		$this->history_storage = new HistoryStorage($_ENV['HOME'] . '/.matrixsqlclient_history', true);
-		$this->shell->history = $this->history_storage->getData();
+		$this->shell->history = $this->history_storage->get_data();
 	}
 	
 	/**
 	 * Destructor function - should restore terminal settings
 	 */
 	public function __destruct() {
-		$this->restoreTerminal();
+		$this->restore_terminal();
 	}
 	
 	/**
@@ -113,7 +113,7 @@ class MatrixSqlTerminal {
 		
 					// Add this command to the history
 					$this->shell->readline_add_history($sql);
-					$this->history_storage->setData($this->shell->history);
+					$this->history_storage->set_data($this->shell->history);
 					
 					// Strip semicolon from end if its Oracle
 					if ($this->db_type == 'oci') {
@@ -126,8 +126,21 @@ class MatrixSqlTerminal {
 					echo "\n";
 
 					// UPDATE
-					if (strtolower(substr($sql, 0, 6)) == "update") {
+					if (strtoupper(substr($sql, 0, 6)) == "UPDATE") {
 						echo "UPDATE " . count($source_data);
+					}
+
+					// Transaction stuff
+					elseif ((strtoupper(substr($sql, 0, 5)) == "BEGIN") ||
+					        (strtoupper(substr($sql, 0, 5)) == "START TRANSACTION")) {
+						echo "BEGIN";
+					}
+					elseif ((strtoupper(substr($sql, 0, 5)) == "ABORT") ||
+					        (strtoupper(substr($sql, 0, 5)) == "ROLLBACK")) {
+						echo "ROLLBACK";
+					}
+					elseif (strtoupper(substr($sql, 0, 6)) == "COMMIT") {
+						echo "COMMIT";
 					}
 
 					// SELECT
@@ -138,8 +151,6 @@ class MatrixSqlTerminal {
 	
 							$output = new ArrayToTextTable($source_data);
 							$output->showHeaders(true);
-					
-							echo "\n";
 							$output->render();
 						}
 						
@@ -171,7 +182,7 @@ class MatrixSqlTerminal {
 	 *
 	 * @param bool whether or not to save the existing terminal settings for restoring later
 	 */
-	public function resetTerminal($save_existing=FALSE) {
+	public function reset_terminal($save_existing=FALSE) {
 
 		// Save existing settings
 		if ($save_existing) {
@@ -185,7 +196,7 @@ class MatrixSqlTerminal {
 	/**
 	 * Restores the terminal to the previously saved state.
 	 */
-	public function restoreTerminal() {
+	public function restore_terminal() {
 		system("stty '" . trim($this->tty_saved) . "'");
 	}
 }

@@ -65,14 +65,14 @@ class HistoryStorage {
 	/**
 	 * Returns an array of the data stored in memory.
 	 */
-	function getData() {
+	function get_data() {
 		return $this->data;
 	}
 
 	/**
 	 * Updates the array stored in the memory.
 	 */
-	function setData($data) {
+	function set_data($data) {
 		if (is_array($data)) {
 			$this->data = $data;
 		} else {
