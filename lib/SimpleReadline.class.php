@@ -13,7 +13,7 @@ class SimpleReadline {
 	/**
 	 * @var Stores the command line history.
 	 */
-	private $history = array();
+	public $history = array();
 	
 	/**
 	 * @var Stores a working copy the command line history.
@@ -36,7 +36,7 @@ class SimpleReadline {
 	private $debug = FALSE;
 
 	/**
-	 * 
+	 * @var Stores current cursor position
 	 */
 	private $buffer_position = 0;
 	
@@ -174,10 +174,11 @@ class SimpleReadline {
 					if ($this->buffer_position < strlen($this->buffer)) {
 					
 						// If the cursor is in the middle of the line...
-						$tail = $this->getBufferTail();
+						$head = substr($this->buffer, 0, $this->buffer_position);
+						$tail = substr($this->buffer, $this->buffer_position, strlen($this->buffer));
 						echo $c . $tail;
-						self::moveleft(strlen($tail));
-						$this->buffer = $this->getBufferHead() . $c . $this->getBufferTail();
+						TerminalDisplay::left(strlen($tail));
+						$this->buffer = $head . $c . $tail;
 
 					} else {
 

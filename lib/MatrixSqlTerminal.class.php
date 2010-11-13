@@ -1,4 +1,14 @@
 <?php
+/**
+ * Matrix SQL client - the main class.
+ *
+ * Classes this relies on:
+ *  - SimpleReadline
+ *  - HistoryStorage
+ *
+ * @author Daniel Simmons <dan@dans.im>
+ * @copyright Copyright (C) 2010 Daniel Simmons
+ */
 class MatrixSqlTerminal {
 
 	/**
@@ -17,6 +27,16 @@ class MatrixSqlTerminal {
 	private $tty_saved = '';
 
 	/**
+	 * @var $history_stage HistoryStorage class that saves command history to a file
+	 */
+	private $history_storage;
+	
+	/**
+	 * @var $shell SimpleReadline object
+	 */
+	private $shell;
+
+	/**
 	 * Constructor - initialises Matrix DAL and attempts to connect to database
 	 */
 	public function __construct() {
@@ -30,6 +50,11 @@ class MatrixSqlTerminal {
 		// Attempt to connect
 		MatrixDAL::dbConnect($this->dsn, $this->db_type);
 		MatrixDAL::changeDb($this->db_type);
+		
+		// Instantiate/initialise stuff
+		$this->shell = new SimpleReadline();
+		$this->history_storage = new HistoryStorage($_ENV['HOME'] . '/.matrixsqlclient_history', true);
+		$this->shell->history = $this->history_storage->getData();
 	}
 	
 	/**
@@ -44,8 +69,6 @@ class MatrixSqlTerminal {
 	 */
 	public function run() {
 
-		$shell = new SimpleReadline();
-		
 		$prompt = '=# ';
 		$sql = '';
 		
@@ -56,7 +79,7 @@ class MatrixSqlTerminal {
 		while (1) {
 		
 			// Prompt for input
-			$line = $shell->readline($this->dsn['DSN'] . $prompt);
+			$line = $this->shell->readline($this->dsn['DSN'] . $prompt);
 		
 		//	echo "\ndebug: line: " . $line . "\n";
 		
@@ -89,7 +112,8 @@ class MatrixSqlTerminal {
 					$sql = trim($sql);
 		
 					// Add this command to the history
-					$shell->readline_add_history($sql);
+					$this->shell->readline_add_history($sql);
+					$this->history_storage->setData($this->shell->history);
 					
 					// Strip semicolon from end if its Oracle
 					if ($this->db_type == 'oci') {
