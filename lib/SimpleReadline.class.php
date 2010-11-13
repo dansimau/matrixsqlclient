@@ -200,53 +200,17 @@ class SimpleReadline {
 				echo "debug: history: item: " . $this->history_tmp[$this->history_position] . "\n";
 				var_dump($this->history_tmp);
 			}
-				
-			// If $line has been set, return it
+
+			// If line has been set, we're ready to do something with this command
 			if ($line !== NULL) {
 			
-				// Special SimpleReadline commands
-				if (substr(trim($line), 0, 6) == "\debug") {
+				// Firstly check for and process internal SimpleReadline commands
+				if ($this->processInternalCommand(trim($line))) {
 
-					if ($this->debug) {
-						echo "\ndebug mode off.\n";
-						$this->debug = FALSE;
-
-					} else {
-
-						echo "\ndebug mode on.\n";
-						$this->debug = TRUE;
-					}
-
-					// Add item to history
+					// Command was executed, so add it to history, reset and start again
 					$this->addHistoryItem($line);
-
-					// Reset everything
 					$line = NULL;
 					$this->reset();
-
-					if ($prompt !== NULL) {
-						echo "\n" . $prompt;
-					}
-
-				} elseif (trim($line) == "\history") {
-				
-					echo "\n\n";
-
-					// Print history
-					for ($i=0; $i<count($this->history); $i++) {
-						echo $i+1 . ". " . $this->history[$i] . "\n";
-					}
-
-					// Add item to history
-					$this->addHistoryItem($line);
-
-					// Reset everything
-					$line = NULL;
-					$this->reset();
-
-					if ($prompt !== NULL) {
-						echo "\n" . $prompt;
-					}
 				}
 
 				// Remove temp history item
@@ -256,7 +220,42 @@ class SimpleReadline {
 			}
 		}
 	}
-	
+
+	private function processInternalCommand($command) {
+
+		// debug command
+		if (substr($command, 0, 2) === "\d") {
+
+			if ($this->debug) {
+				echo "\ndebug mode off.\n";
+				$this->debug = FALSE;
+
+			} else {
+
+				echo "\ndebug mode on.\n";
+				$this->debug = TRUE;
+			}
+			
+			return true;
+		}
+		
+		// history command
+		elseif (substr($command, 0, 2) === "\h") {
+
+			echo "\n\n";
+
+			// Print history
+			for ($i=0; $i<count($this->history); $i++) {
+				echo $i+1 . ". " . $this->history[$i] . "\n";
+			}
+
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
 	/**
 	 * Returns data from a keypress. This will either be a single character, or a set of control
 	 * characters.
