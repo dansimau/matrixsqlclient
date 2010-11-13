@@ -70,7 +70,7 @@ class SimpleReadline {
 	
 		// Output prompt
 		if ($prompt !== NULL) {
-			echo "\n" . $prompt;
+			TerminalDisplay::output("\n" . $prompt);
 		}
 		
 		while (1) {
@@ -176,8 +176,11 @@ class SimpleReadline {
 						// If the cursor is in the middle of the line...
 						$head = substr($this->buffer, 0, $this->buffer_position);
 						$tail = substr($this->buffer, $this->buffer_position, strlen($this->buffer));
+						
+						TerminalDisplay::xoff();
 						echo $c . $tail;
 						TerminalDisplay::left(strlen($tail));
+						TerminalDisplay::on();
 						$this->buffer = $head . $c . $tail;
 
 					} else {
@@ -227,12 +230,12 @@ class SimpleReadline {
 		if (substr($command, 0, 2) === "\d") {
 
 			if ($this->debug) {
-				echo "\ndebug mode off.\n";
+				TerminalDisplay::output("\ndebug mode off.\n");
 				$this->debug = FALSE;
 
 			} else {
 
-				echo "\ndebug mode on.\n";
+				TerminalDisplay::output("\ndebug mode on.\n");
 				$this->debug = TRUE;
 			}
 			
@@ -246,7 +249,7 @@ class SimpleReadline {
 
 			// Print history
 			for ($i=0; $i<count($this->history); $i++) {
-				echo $i+1 . ". " . $this->history[$i] . "\n";
+				TerminalDisplay::output($i+1 . ". " . $this->history[$i] . "\n");
 			}
 
 			return true;
@@ -333,6 +336,8 @@ class SimpleReadline {
 
     	} else {
 
+			TerminalDisplay::xoff();
+
 	   		// Clear current line
 	   		$this->cursor_right(strlen($this->buffer) - $this->buffer_position);
 	   		$this->backspace($this->buffer_position);
@@ -344,6 +349,8 @@ class SimpleReadline {
 			echo $this->history_tmp[$this->history_position];
 	   		$this->buffer = $this->history_tmp[$this->history_position];
 	   		$this->buffer_position = strlen($this->buffer);
+	   		
+	   		TerminalDisplay::xon();
 	   		
 	   		return true;
     	}
@@ -451,6 +458,9 @@ class SimpleReadline {
 
 class TerminalDisplay {
 
+	const XON	= 16;
+	const XOFF	= 19;
+
 	public static function left($count=1) {
 		for ($i=0; $i<$count; $i++) echo chr(8);
 	}
@@ -460,6 +470,17 @@ class TerminalDisplay {
 		for ($i=0; $i<$count; $i++) echo ' ';
 		self::left($count);
 	}
+	
+	public static function output($text) {
+		echo chr(self::XOFF) . $text . chr(self::XON);
+	}
+	
+	public static function xoff() {
+		echo chr(self::XOFF);
+	}
 
+	public static function xon() {
+		echo chr(self::XON);
+	}
 }
 ?>

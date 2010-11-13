@@ -11,6 +11,9 @@
  */
 class MatrixSqlTerminal {
 
+	const XON	= 16;
+	const XOFF	= 19;
+
 	/**
 	 * @var $dsn Database connection string
 	 */
@@ -72,9 +75,7 @@ class MatrixSqlTerminal {
 		$prompt = '=# ';
 		$sql = '';
 		
-		echo "Welcome to matrixsqlclient (alpha), the interative database terminal in PHP." . "\n" . "\n";
-		echo "You are now connected." . "\n" . "Database type: " . $this->db_type . "." . "\n";
-		
+		$this->output("Welcome to matrixsqlclient (alpha), the interative database terminal in PHP.\n\nYou are now connected.\nDatabase type: " . $this->db_type . ".\n");
 		
 		while (1) {
 		
@@ -148,7 +149,7 @@ class MatrixSqlTerminal {
 
 						// Only render the table if rows were returned
 						if (!empty($source_data)) {
-	
+
 							$output = new ArrayToTextTable($source_data);
 							$output->showHeaders(true);
 							$output->render();
@@ -190,7 +191,7 @@ class MatrixSqlTerminal {
 		}
 
 		// Reset terminal
-		system("stty raw opost -olcuc -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef");
+		system("stty raw opost -olcuc -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef ixoff ixon");
 	}
 
 	/**
@@ -198,6 +199,10 @@ class MatrixSqlTerminal {
 	 */
 	public function restore_terminal() {
 		system("stty '" . trim($this->tty_saved) . "'");
+	}
+	
+	public function output($text) {
+		echo chr(self::XOFF) . $text . chr(self::XON);
 	}
 }
 ?>
