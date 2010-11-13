@@ -87,12 +87,12 @@ class SimpleReadline {
 
 				// CTRL-A (Home) - move the cursor all the way to the left
 				case chr(1):
-					$this->cursor_left($this->buffer_position);
+					$this->cursorLeft($this->buffer_position);
 					break;
 
 				// CTRL-E (End) - move cursor all the way to the end
 				case chr(5):
-					$this->cursor_right(strlen($this->buffer) - $this->buffer_position);
+					$this->cursorRight(strlen($this->buffer) - $this->buffer_position);
 					break;
 				
 				// Line-delete - backspace from current position to beginning of line
@@ -127,22 +127,22 @@ class SimpleReadline {
 
 				case UP:
 					// Move backwards in the history (or beep if we can't)
-					if (!$this->history_move_position(-1)) $this->bell();
+					if (!$this->historyMovePosition(-1)) $this->bell();
 					break;
 
 				case DOWN:
 					// Move forward in the history (or beep if we can't)
-					if (!$this->history_move_position(1)) $this->bell();					
+					if (!$this->historyMovePosition(1)) $this->bell();					
 					break;
 
 				case LEFT:
 					// Move left, or beep if we're already at the beginning
-					if (!$this->cursor_left()) $this->bell();
+					if (!$this->cursorLeft()) $this->bell();
 					break;
 
 				case RIGHT:
 					// Move right, or beep if we're already at the end
-					if (!$this->cursor_right()) $this->bell();
+					if (!$this->cursorRight()) $this->bell();
 					break;
 
 				// Backspace key was pressed
@@ -208,10 +208,10 @@ class SimpleReadline {
 			if ($line !== NULL) {
 			
 				// Firstly check for and process internal SimpleReadline commands
-				if ($this->process_internal_command(trim($line))) {
+				if ($this->processInternalCommand(trim($line))) {
 
 					// Command was executed, so add it to history, reset and start again
-					$this->add_history_item($line);
+					$this->addHistoryItem($line);
 					$line = NULL;
 					$this->reset();
 				}
@@ -224,7 +224,7 @@ class SimpleReadline {
 		}
 	}
 
-	private function process_internal_command($command) {
+	private function processInternalCommand($command) {
 
 		// debug command
 		if (substr($command, 0, 2) === "\d") {
@@ -311,15 +311,15 @@ class SimpleReadline {
 	 * @param string The line to be added in the history.
 	 * @return bool Returns TRUE on success or FALSE on failure.
 	 */
-	public function add_history_item($line) {
+	public function addHistoryItem($line) {
 		return ($this->history[] = trim($line));
 	}
 
 	/**
-	 * Alias of add_history_item for historical purposes.
+	 * Alias of addHistoryItem for historical purposes.
 	 */	
 	public function readline_add_history($line) {
-		return $this->add_history_item($line);
+		return $this->addHistoryItem($line);
 	}
 
 	/**
@@ -327,7 +327,7 @@ class SimpleReadline {
 	 *
 	 * @param Integer specifying how many places to move up/down in the history
 	 */
-	private function history_move_position($n) {
+	private function historyMovePosition($n) {
 
 		// Check we can actually move this far
 		if (!array_key_exists($this->history_position + $n, $this->history_tmp)) {
@@ -339,7 +339,7 @@ class SimpleReadline {
 			TerminalDisplay::xoff();
 
 	   		// Clear current line
-	   		$this->cursor_right(strlen($this->buffer) - $this->buffer_position);
+	   		$this->cursorRight(strlen($this->buffer) - $this->buffer_position);
 	   		$this->backspace($this->buffer_position);
 
     		// Move forward/back n number of positions
@@ -369,7 +369,7 @@ class SimpleReadline {
 	 *
 	 * @param The number of characters left to move the cursor.
 	 */
-	private function cursor_left($n=1) {
+	private function cursorLeft($n=1) {
 
 		// Move cursor left if we can
 		if ($this->buffer_position > 0) {
@@ -390,7 +390,7 @@ class SimpleReadline {
 	 * @param Number of characters to the right to move the cursor.
 	 * @return boolean Whether or not the cursor was able to be moved to the right
 	 */
-	private function cursor_right($n=1) {
+	private function cursorRight($n=1) {
 
 		if ($this->buffer_position < strlen($this->buffer)) {
 

@@ -44,7 +44,7 @@ class MatrixSqlTerminal {
 	 */
 	public function __construct() {
 
-		$this->reset_terminal(true);
+		$this->resetTerminal(true);
 
 		// Load database DSN from Matrix's db.inc
 		$this->dsn = $GLOBALS['db_conf']['db2'];
@@ -57,14 +57,14 @@ class MatrixSqlTerminal {
 		// Instantiate/initialise stuff
 		$this->shell = new SimpleReadline();
 		$this->history_storage = new HistoryStorage($_ENV['HOME'] . '/.matrixsqlclient_history', true);
-		$this->shell->history = $this->history_storage->get_data();
+		$this->shell->history = $this->history_storage->getData();
 	}
 	
 	/**
 	 * Destructor function - should restore terminal settings
 	 */
 	public function __destruct() {
-		$this->restore_terminal();
+		$this->restoreTerminal();
 	}
 	
 	/**
@@ -114,7 +114,7 @@ class MatrixSqlTerminal {
 		
 					// Add this command to the history
 					$this->shell->readline_add_history($sql);
-					$this->history_storage->set_data($this->shell->history);
+					$this->history_storage->setData($this->shell->history);
 					
 					// Strip semicolon from end if its Oracle
 					if ($this->db_type == 'oci') {
@@ -183,7 +183,7 @@ class MatrixSqlTerminal {
 	 *
 	 * @param bool whether or not to save the existing terminal settings for restoring later
 	 */
-	public function reset_terminal($save_existing=FALSE) {
+	public function resetTerminal($save_existing=FALSE) {
 
 		// Save existing settings
 		if ($save_existing) {
@@ -197,7 +197,7 @@ class MatrixSqlTerminal {
 	/**
 	 * Restores the terminal to the previously saved state.
 	 */
-	public function restore_terminal() {
+	public function restoreTerminal() {
 		system("stty '" . trim($this->tty_saved) . "'");
 	}
 	
