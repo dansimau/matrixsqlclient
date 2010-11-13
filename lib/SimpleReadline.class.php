@@ -70,7 +70,7 @@ class SimpleReadline {
 	
 		// Output prompt
 		if ($prompt !== NULL) {
-			TerminalDisplay::output("\n" . $prompt);
+			echo "\n" . $prompt;
 		}
 		
 		while (1) {
@@ -230,12 +230,12 @@ class SimpleReadline {
 		if (substr($command, 0, 2) === "\d") {
 
 			if ($this->debug) {
-				TerminalDisplay::output("\ndebug mode off.\n");
+				echo "\ndebug mode off.\n";
 				$this->debug = FALSE;
 
 			} else {
 
-				TerminalDisplay::output("\ndebug mode on.\n");
+				echo "\ndebug mode on.\n";
 				$this->debug = TRUE;
 			}
 			
@@ -249,7 +249,7 @@ class SimpleReadline {
 
 			// Print history
 			for ($i=0; $i<count($this->history); $i++) {
-				TerminalDisplay::output($i+1 . ". " . $this->history[$i] . "\n");
+				echo $i+1 . ". " . $this->history[$i] . "\n";
 			}
 
 			return true;
