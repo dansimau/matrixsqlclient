@@ -102,11 +102,17 @@ class SimpleReadline {
 
 				// Word-delete (CTRL-W)
 				case chr(23):
-					if (!strrpos($this->buffer, ' ', strlen($this->buffer)-$this->buffer_position)) {
-						$this->backspace($this->buffer_position);
+
+					// Get previous word position
+					$prev_word_pos = $this->buffer_position-$this->getPreviousWordPos();
+
+					// Delete word, unless we're at the start of the line, then bell
+					if ($prev_word_pos > 0) {
+						$this->backspace($this->buffer_position-$this->getPreviousWordPos());
 					} else {
-						$this->backspace(strlen($this->buffer)-strrpos($this->buffer, ' ', strlen($this->buffer)-$this->buffer_position));
+						$this->bell();
 					}
+
 					break;
 
 				case chr(3):	// CTRL-C
@@ -446,6 +452,29 @@ class SimpleReadline {
 		}
     	
 		return true;
+	}
+
+	/**
+	 * Returns the buffer position of the previous word, based on current buffer position.
+	 *
+	 * @return integer the position of the first character of the previous word
+	 */
+	private function getPreviousWordPos() {
+
+		$temp_str = substr($this->buffer, 0, $this->buffer_position);
+
+		// Remove trailing spaces on the end
+		$temp_str = rtrim($temp_str);
+
+	    // Get first reverse matching space
+	    $prev_word_pos = strrpos($temp_str, ' ');
+
+		// Add one, which is the beginning of the previous word (unless we're at the beginning of the line)
+	    if ($prev_word_pos > 0) {
+			$prev_word_pos++;
+	    }
+
+	    return $prev_word_pos;
 	}
 
 	/**
