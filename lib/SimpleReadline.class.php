@@ -281,7 +281,7 @@ class SimpleReadline {
 	 *
 	 * @return Returns a string containing a character or set of control characters.
 	 */
-	private static function readKey() {
+	public static function readKey() {
 	
 		$buffer = NULL;
 		$key = NULL;
@@ -527,7 +527,7 @@ class SimpleReadline {
 	/**
 	 * Make the screen beep.
 	 */
-	private function bell() {
+	public static function bell() {
 		echo chr(7);
 	}
 }

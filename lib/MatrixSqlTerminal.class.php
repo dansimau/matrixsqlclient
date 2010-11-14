@@ -37,6 +37,11 @@ class MatrixSqlTerminal {
 	private $shell;
 
 	/**
+	 * @var $line_buffer line output buffer
+	 */
+	private $line_buffer = array();
+
+	/**
 	 * Constructor - initialises Matrix DAL and attempts to connect to database
 	 */
 	public function __construct() {
@@ -85,15 +90,11 @@ class MatrixSqlTerminal {
 			// Prompt for input
 			$line = $this->shell->readline($this->dsn['DSN'] . $prompt);
 		
-		//	echo "\ndebug: line: " . $line . "\n";
-		
 			// Exits
 			if ((substr($line, 0, 4) == 'exit') || (substr($line, 0, 4) == 'quit')) {
 				echo "\n";
 				exit;
 			}
-			
-			// CTRL-D
 			if (substr($line, strlen($line)-1, strlen($line)) === chr(4)) {
 				echo "\q\n";
 				exit;
@@ -108,64 +109,68 @@ class MatrixSqlTerminal {
 			}
 		
 			$sql .= "\n" . $line;
-		
+			echo "\n";
+
 			// If the current sql string buffer has a semicolon in it, we're ready to run
 			// the SQL!
 			if (strpos($sql, ';')) {
+
+				$sql = trim($sql);
+
+				// Add this command to the history
+				$this->shell->readline_add_history($sql);
+
+				// Strip semicolon from end if its Oracle
+				if ($this->db_type == 'oci') {
+				    $sql = substr($sql, 0, strlen($sql)-1);
+				}
+
 				try {
-					$sql = trim($sql);
-		
-					// Add this command to the history
-					$this->shell->readline_add_history($sql);
-					
-					// Strip semicolon from end if its Oracle
-					if ($this->db_type == 'oci') {
-						$sql = substr($sql, 0, strlen($sql)-1);
-					}
-					
 					// Run the SQL
 					$source_data = MatrixDAL::executeSqlAssoc($sql);
-
-					echo "\n";
-
-					// UPDATE
-					if (strtoupper(substr($sql, 0, 6)) == "UPDATE") {
-						echo "UPDATE " . count($source_data);
-					}
-
-					// Transaction stuff
-					elseif ((strtoupper(substr($sql, 0, 5)) == "BEGIN") ||
-					        (strtoupper(substr($sql, 0, 5)) == "START TRANSACTION")) {
-						echo "BEGIN";
-					}
-					elseif ((strtoupper(substr($sql, 0, 5)) == "ABORT") ||
-					        (strtoupper(substr($sql, 0, 5)) == "ROLLBACK")) {
-						echo "ROLLBACK";
-					}
-					elseif (strtoupper(substr($sql, 0, 6)) == "COMMIT") {
-						echo "COMMIT";
-					}
-
-					// SELECT
-					else {
-
-						// Only render the table if rows were returned
-						if (!empty($source_data)) {
-
-							$output = new ArrayToTextTable($source_data);
-							$output->showHeaders(true);
-							$output->render();
-						}
-						
-						echo "\n" . "(" . count($source_data) . " row";
-						if (count($source_data) !== 1) echo "s";
-						echo ")" . "\n";
-					}
-			
-					unset($output);
 				}
 				catch (Exception $e) {
 					echo "\n" . $e->getMessage() . "\n";
+					continue;
+				}
+
+				// Find out what type of query this is and what to do with it
+				if (strtoupper(substr($sql, 0, 6)) == "UPDATE") {
+				    echo "UPDATE " . count($source_data);
+				}
+				elseif ((strtoupper(substr($sql, 0, 5)) == "BEGIN") ||
+				        (strtoupper(substr($sql, 0, 5)) == "START TRANSACTION")) {
+				    echo "BEGIN";
+				}
+				elseif ((strtoupper(substr($sql, 0, 5)) == "ABORT") ||
+				        (strtoupper(substr($sql, 0, 5)) == "ROLLBACK")) {
+				    echo "ROLLBACK";
+				}
+				elseif (strtoupper(substr($sql, 0, 6)) == "COMMIT") {
+				    echo "COMMIT";
+				}
+				// SELECTs and default
+				else {
+
+					// Only render the table if rows were returned
+					if (!empty($source_data)) {
+
+						// Render the table
+						$table = new ArrayToTextTable($source_data);
+						$table->showHeaders(true);
+
+						$this->addToLineBuffer($table->render(true));
+					}
+
+					// Build count summary (at end of table) and add to line buffer
+					$count_str = "(" . count($source_data) . " row";
+					if (count($source_data) !== 1) $count_str .= "s";
+					$count_str .= ")" . "\n";
+
+					$this->addToLineBuffer(array("\n", $count_str));
+
+					// Output the data
+					$this->printLines();
 				}
 		
 				// Reset the prompt cause its a new query
@@ -204,6 +209,120 @@ class MatrixSqlTerminal {
 	 */
 	public function restoreTerminal() {
 		system("stty '" . trim($this->tty_saved) . "'");
+	}
+
+	/**
+	 * Returns the height and width of the terminal.
+	 *
+	 * @return array An array with two elements - number of rows and number of columns.
+	 */
+	public function getTtySize() {
+		return explode(' ', `stty size`);
+	}
+
+	/**
+	 * Prints the specified number of lines from the line buffer.
+	 *
+	 * @param $n number of lines to print, or 0 to print all lines, with pagination (default)
+	 */
+	public function printLines($n=0, $array=NULL) {
+
+		if ($n > 0) {
+
+			// Print a specific number of lines
+			for ($i=0; $i<count($this->line_buffer) && $i<$n; $i++) {
+				$line = array_shift($this->line_buffer);
+				echo $line;
+				if ($line[strlen($line)-1] != "\n") echo "\n";
+			}
+
+		} else {
+
+			// Get current terminal size
+			$tty_size = $this->getTtySize();
+
+			if (count($this->line_buffer) < $tty_size[0]) {
+
+				// Print all lines, if it fits on the tty
+				$this->printLines(count($this->line_buffer));
+
+			} else {
+
+				// Otherwise, let's paginate...
+
+				// Print first chunk
+				$this->printLines($tty_size[0]-1);
+				echo "\033[30;47m" . "--More--" . "\033[0m";
+
+				while (1) {
+
+					$c = SimpleReadline::readKey();
+
+					switch ($c) {
+
+						// User wants more lines, one at a time
+						case chr(10):
+
+							// Backspace the "--More--"
+							TerminalDisplay::backspace(8);
+
+							$this->printLines(1);
+							echo "\033[30;47m" . "--More--" . "\033[0m";
+
+							break;
+
+						// User wants to end output (ie. 'q', CTRL+C)
+						case chr(113):
+
+							// Backspace the "--More--"
+							TerminalDisplay::backspace(8);
+
+							// Clear line buffer
+							$this->clearLineBuffer();
+
+							return;
+							break;
+
+						default:
+							SimpleReadline::bell();
+							continue;
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Adds data to the line buffer.
+	 *
+	 * @param array array of lines to add to the buffer
+	 */
+	public function addToLineBuffer($array) {
+
+		// Get current terminal size
+		$tty_size = $this->getTtySize();
+
+		// Reset output buffer
+		$this->line_buffer = array();
+
+		// Loop through data so we can split lines at terminal size
+		for ($i=0; $i<count($array); $i++) {
+
+			// Add newlines to the end of each proper line
+			$array[$i] .= "\n";
+
+			// Split line at terminal width and add to output
+			foreach (str_split($array[$i], (int)$tty_size[1]) as $line) {
+				$this->line_buffer[] = $line;
+			}
+		}
+	}
+
+	/**
+	 * Erases everything in the line buffer.
+	 */
+	public function clearLineBuffer() {
+		$this->line_buffer = array();
 	}
 }
 ?>
