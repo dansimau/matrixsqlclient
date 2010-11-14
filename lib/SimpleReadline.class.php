@@ -109,6 +109,15 @@ class SimpleReadline {
 					}
 					break;
 
+				// CTRL-LEFT
+				case chr(27) . chr(91) . chr(53) . chr(68):
+					if (!strrpos($this->buffer, ' ', strlen($this->buffer)-$this->buffer_position)) {
+						$this->cursorLeft($this->buffer_position);
+					} else {
+						$this->cursorLeft(strlen($this->buffer)-strrpos($this->buffer, ' ', strlen($this->buffer)-$this->buffer_position));
+					}
+					break;
+
 				case chr(3):	// CTRL-C
 						$line = $this->buffer . $c;
 						break;
@@ -284,6 +293,12 @@ class SimpleReadline {
 			// If first character was ESC, then this char is part of control code. Add
 			// this character to the buffer and read another character
 			} elseif (ord($c) === 91 && ord($buffer[0]) === 27 && strlen($buffer) === 1) {
+
+				$buffer .= $c;
+				continue;
+
+			// If third character is a number, then keep going (get another character)
+			} elseif (strlen($buffer) === 2 && ord($buffer[0]) === 27 && ord($buffer[1]) === 91 && ord($c) >= 30 && ord($c) <= 57) {
 
 				$buffer .= $c;
 				continue;
