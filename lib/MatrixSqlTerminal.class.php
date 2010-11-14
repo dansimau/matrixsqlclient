@@ -35,6 +35,11 @@ class MatrixSqlTerminal {
 	 * @var $shell SimpleReadline object
 	 */
 	private $shell;
+	
+	/**
+	 * @var $line_buffer line output buffer
+	 */
+	private $line_buffer = array();
 
 	/**
 	 * Constructor - initialises Matrix DAL and attempts to connect to database
@@ -153,17 +158,76 @@ class MatrixSqlTerminal {
 						// Only render the table if rows were returned
 						if (!empty($source_data)) {
 
-							$output = new ArrayToTextTable($source_data);
-							$output->showHeaders(true);
-							$output->render();
-						}
+							$tty_size = $this->getTtySize();
+
+							$table = new ArrayToTextTable($source_data);
+							$table->showHeaders(true);
+
+							// Render data into an array
+							$data = explode("\n", $table->render(true));
 						
-						echo "\n" . "(" . count($source_data) . " row";
-						if (count($source_data) !== 1) echo "s";
-						echo ")" . "\n";
+							// Reset output buffer
+							$this->line_buffer = array();
+
+							// Loop through data so we can split lines at terminal size
+							for ($i=0; $i<count($data); $i++) {
+
+								// Add newlines to the end of each proper line
+								$data[$i] .= "\n";
+
+								// Split line at terminal width and add to output
+								$tmp = str_split($data[$i], (int)$tty_size[1]);
+								foreach ($tmp as $line) {
+									$this->line_buffer[] = $line;
+								}
+							}
+
+							// Build count summary (at end of table) and add to line buffer
+							$count_str = "(" . count($data) . " row";
+							if (count($source_data) !== 1) $count_str .= "s";
+							$count_str .= ")" . "\n";
+							$this->line_buffer[] = "\n";
+							$this->line_buffer[] = $count_str;
+
+							// Ready to output! Implement |more functionality
+							if (count($this->line_buffer) > $tty_size[0]) {
+
+								$this->printLines($tty_size[0]-1);
+								echo "\n" . "\033[30;47m" . "--More--" . "\033[0m";
+
+								while (1) {
+
+									$c = SimpleReadline::readKey();
+
+									switch ($c) {
+
+										case chr(10):
+
+											// Backspace the "--More--"
+											TerminalDisplay::backspace(8);
+											$this->printLines(1);
+											echo "\n" . "\033[30;47m" . "--More--" . "\033[0m";
+											break;
+
+										// End output (ie. 'q', CTRL+C)
+										case chr(113):
+											// Backspace the "--More--"
+											TerminalDisplay::backspace(8);
+											break 2;
+
+										default:
+											SimpleReadline::bell();
+											continue;
+									}
+								}
+
+							} else {
+								for ($i=0; $i<count($output); $i++) {
+									echo $output[$i] . "\n";
+								}
+							}
+						}
 					}
-			
-					unset($output);
 				}
 				catch (Exception $e) {
 					echo "\n" . $e->getMessage() . "\n";
@@ -202,6 +266,24 @@ class MatrixSqlTerminal {
 	 */
 	public function restoreTerminal() {
 		system("stty '" . trim($this->tty_saved) . "'");
+	}
+
+	/**
+	 * Returns the height and width of the terminal.
+	 *
+	 * @return array An array with two elements - number of rows and number of columns.
+	 */
+	public function getTtySize() {
+		return explode(' ', `stty size`);
+	}
+
+	/**
+	 * Prints the specified number of lines from the line buffer.
+	 *
+	 * @param $n number of lines to print
+	 */
+	public function printLines($n=1) {
+		for ($i=0; $i<count($this->line_buffer) && $i<$n; $i++) echo array_shift($this->line_buffer);
 	}
 }
 ?>
