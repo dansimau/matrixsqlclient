@@ -117,11 +117,12 @@ class SimpleReadline {
 
 				// CTRL-LEFT
 				case chr(27) . chr(91) . chr(53) . chr(68):
-					if (!strrpos($this->buffer, ' ', strlen($this->buffer)-$this->buffer_position)) {
-						$this->cursorLeft($this->buffer_position);
-					} else {
-						$this->cursorLeft(strlen($this->buffer)-strrpos($this->buffer, ' ', strlen($this->buffer)-$this->buffer_position));
-					}
+					$this->cursorLeft($this->buffer_position-$this->getPreviousWordPos());
+					break;
+
+				// CTRL-RIGHT
+				case chr(27) . chr(91) . chr(53) . chr(67):
+					$this->cursorRight($this->getNextWordPos()-$this->buffer_position);
 					break;
 
 				case chr(3):	// CTRL-C
@@ -490,6 +491,37 @@ class SimpleReadline {
 	    }
 
 	    return $prev_word_pos;
+	}
+
+	/**
+	 * Returns the buffer position of the next word, based on current buffer position.
+	 *
+	 * @return integer the position of the first character of the next word
+	 */
+	private function getNextWordPos() {
+
+		$temp_str = substr($this->buffer, $this->buffer_position, strlen($this->buffer));
+
+		// Store length, so we can calculate how many spaces are trimmed in the next step
+		$temp_str_len = strlen($temp_str);
+
+		// Trim spaces from the beginning
+		$temp_str = ltrim($temp_str);
+
+		// Trimmed spaces
+		$trimmed_spaces = $temp_str_len - strlen($temp_str);
+
+	    // Get first matching space
+	    $next_word_pos = strpos($temp_str, ' ');
+
+	    // If there is no matching space, we're at the end of the string
+	    if ($next_word_pos === FALSE) {
+			$next_word_pos = strlen($this->buffer);
+	    } else {
+			$next_word_pos = $this->buffer_position + $trimmed_spaces + $next_word_pos;
+	    }
+
+	    return $next_word_pos;
 	}
 
 	/**
