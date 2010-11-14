@@ -201,9 +201,5 @@ class MatrixSqlTerminal {
 	public function restoreTerminal() {
 		system("stty '" . trim($this->tty_saved) . "'");
 	}
-	
-	public function output($text) {
-		echo chr(self::XOFF) . $text . chr(self::XON);
-	}
 }
 ?>
