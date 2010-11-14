@@ -7,7 +7,7 @@ class MatrixDAL {
 		return true;
 	}
 	public static function executeSqlAssoc($a) {
-		if (strtoupper(substr($a, 0, 5))) {
+		if (strtoupper(substr($a, 0, 6)) === "SELECT") {
 			return array(
 							array('one', 'two', 'three', 'four'),
 							array('one', 'two', 'three', 'four'),
