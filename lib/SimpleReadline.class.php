@@ -6,7 +6,7 @@
  * @copyright Copyright (C) 2010 Daniel Simmons
  */
 
-//system("stty raw opost -olcuc -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef");
+//system("stty raw opost -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef");
 
 class SimpleReadline {
 

@@ -194,7 +194,7 @@ class MatrixSqlTerminal {
 		}
 
 		// Reset terminal
-		system("stty raw opost -olcuc -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef");
+		system("stty raw opost -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef");
 	}
 
 	/**
