@@ -117,7 +117,6 @@ class MatrixSqlTerminal {
 		
 					// Add this command to the history
 					$this->shell->readline_add_history($sql);
-					$this->history_storage->setData($this->shell->history);
 					
 					// Strip semicolon from end if its Oracle
 					if ($this->db_type == 'oci') {
@@ -178,6 +177,9 @@ class MatrixSqlTerminal {
 				// (like psql does)
 				$prompt = '-# ';
 			}
+
+			// Update persistent history store
+			$this->history_storage->setData($this->shell->history);
 		}
 	}
 	
