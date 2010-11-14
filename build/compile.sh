@@ -6,6 +6,9 @@ FILES="lib/main.php lib/MatrixSqlTerminal.class.php lib/SimpleReadline.class.php
 # Make temp file
 TMPFILE="$(mktemp)"
 
+REV=$(git rev-list --all |wc -l |tr -d ' ')
+DATE=$(date +%Y-%m-%d)
+
 # Write header
 cat <<EOF >>$TMPFILE
 <?php
@@ -13,9 +16,10 @@ cat <<EOF >>$TMPFILE
  * matrixsqlclient.php - Interactive database terminal in PHP.
  *
  * dsimmons@squiz.co.uk
- * $(date +%Y-%m-%d) (rev $(git rev-list --all |wc -l |tr -d ' '))
+ * $DATE (rev $REV)
  *
  */
+\$rev = $REV;
 
 EOF
 

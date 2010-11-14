@@ -73,7 +73,9 @@ class MatrixSqlTerminal {
 		$sql = '';
 
 		ob_start();
-		echo "Welcome to matrixsqlclient (alpha), the interative database terminal in PHP.";
+		echo "Welcome to matrixsqlclient (alpha";
+		if (!empty($GLOBALS['rev'])) echo ", rev " . $GLOBALS['rev'];
+		echo "), the interative database terminal in PHP.";
 		echo "\n\nYou are now connected.";
 		echo "\nDatabase type: " . $this->db_type . ".\n";
 		ob_end_flush();
