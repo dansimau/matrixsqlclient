@@ -35,7 +35,7 @@ class MatrixSqlTerminal {
 	 * @var $shell SimpleReadline object
 	 */
 	private $shell;
-	
+
 	/**
 	 * @var $line_buffer line output buffer
 	 */
@@ -183,7 +183,7 @@ class MatrixSqlTerminal {
 							}
 
 							// Build count summary (at end of table) and add to line buffer
-							$count_str = "(" . count($data) . " row";
+							$count_str = "(" . count($source_data) . " row";
 							if (count($source_data) !== 1) $count_str .= "s";
 							$count_str .= ")" . "\n";
 							$this->line_buffer[] = "\n";
@@ -193,7 +193,7 @@ class MatrixSqlTerminal {
 							if (count($this->line_buffer) > $tty_size[0]) {
 
 								$this->printLines($tty_size[0]-1);
-								echo "\n" . "\033[30;47m" . "--More--" . "\033[0m";
+								echo "\033[30;47m" . "--More--" . "\033[0m";
 
 								while (1) {
 
@@ -206,7 +206,7 @@ class MatrixSqlTerminal {
 											// Backspace the "--More--"
 											TerminalDisplay::backspace(8);
 											$this->printLines(1);
-											echo "\n" . "\033[30;47m" . "--More--" . "\033[0m";
+											echo "\033[30;47m" . "--More--" . "\033[0m";
 											break;
 
 										// End output (ie. 'q', CTRL+C)
@@ -222,8 +222,8 @@ class MatrixSqlTerminal {
 								}
 
 							} else {
-								for ($i=0; $i<count($output); $i++) {
-									echo $output[$i] . "\n";
+								for ($i=0; $i<count($this->line_buffer); $i++) {
+									echo $this->line_buffer[$i];
 								}
 							}
 						}
@@ -283,7 +283,11 @@ class MatrixSqlTerminal {
 	 * @param $n number of lines to print
 	 */
 	public function printLines($n=1) {
-		for ($i=0; $i<count($this->line_buffer) && $i<$n; $i++) echo array_shift($this->line_buffer);
+		for ($i=0; $i<count($this->line_buffer) && $i<$n; $i++) {
+			$line = array_shift($this->line_buffer);
+			echo $line;
+			if ($line[strlen($line)-1] != "\n") echo "\n";
+		}
 	}
 }
 ?>
