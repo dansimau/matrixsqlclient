@@ -109,11 +109,12 @@ class MatrixSqlTerminal {
 			}
 		
 			$sql .= "\n" . $line;
-			echo "\n";
 
 			// If the current sql string buffer has a semicolon in it, we're ready to run
 			// the SQL!
 			if (strpos($sql, ';')) {
+
+				echo "\n";
 
 				$sql = trim($sql);
 
@@ -159,15 +160,15 @@ class MatrixSqlTerminal {
 						$table = new ArrayToTextTable($source_data);
 						$table->showHeaders(true);
 
-						$this->addToLineBuffer($table->render(true));
+						$this->addToLinesBuffer(explode("\n", $table->render(true)));
 					}
 
 					// Build count summary (at end of table) and add to line buffer
-					$count_str = "(" . count($source_data) . " row";
+					$count_str = "\n(" . count($source_data) . " row";
 					if (count($source_data) !== 1) $count_str .= "s";
-					$count_str .= ")" . "\n";
+					$count_str .= ")";
 
-					$this->addToLineBuffer(array("\n", $count_str));
+					$this->addToLinesBuffer(array($count_str));
 
 					// Output the data
 					$this->printLines();
@@ -225,16 +226,22 @@ class MatrixSqlTerminal {
 	 *
 	 * @param $n number of lines to print, or 0 to print all lines, with pagination (default)
 	 */
-	public function printLines($n=0, $array=NULL) {
+	public function printLines($n=0) {
+
+		$lines_printed = array();
 
 		if ($n > 0) {
 
 			// Print a specific number of lines
-			for ($i=0; $i<count($this->line_buffer) && $i<$n; $i++) {
+			$line_buffer_len = count($this->line_buffer);
+			for ($i=0; $i<$line_buffer_len && $i<$n; $i++) {
 				$line = array_shift($this->line_buffer);
 				echo $line;
-				if ($line[strlen($line)-1] != "\n") echo "\n";
+				$lines_printed[] = $line;
 			}
+
+			// Return the lines printed
+			return $lines_printed;
 
 		} else {
 
@@ -251,11 +258,21 @@ class MatrixSqlTerminal {
 				// Otherwise, let's paginate...
 
 				// Print first chunk
-				$this->printLines($tty_size[0]-1);
+				$last_lines = $this->printLines($tty_size[0]-1);
+				if ($last_lines[count($last_lines)-1][strlen($last_lines[count($last_lines)-1])-1] != "\n") echo "\n";
 				echo "\033[30;47m" . "--More--" . "\033[0m";
 
+				// Print rest of the chunks
 				while (1) {
 
+					// Stop printing chunks if the line buffer is empty
+					if (!count($this->line_buffer) > 0) {
+						// Backspace the "--More--"
+						TerminalDisplay::backspace(8);
+						break;
+    				}
+
+					// Read user input
 					$c = SimpleReadline::readKey();
 
 					switch ($c) {
@@ -266,12 +283,14 @@ class MatrixSqlTerminal {
 							// Backspace the "--More--"
 							TerminalDisplay::backspace(8);
 
-							$this->printLines(1);
+							$last_lines = $this->printLines(1);
+							if ($last_lines[count($last_lines)-1][strlen($last_lines[count($last_lines)-1])-1] != "\n") echo "\n";
 							echo "\033[30;47m" . "--More--" . "\033[0m";
 
 							break;
 
 						// User wants to end output (ie. 'q', CTRL+C)
+						case chr(3):
 						case chr(113):
 
 							// Backspace the "--More--"
@@ -295,24 +314,21 @@ class MatrixSqlTerminal {
 	/**
 	 * Adds data to the line buffer.
 	 *
-	 * @param array array of lines to add to the buffer
+	 * @param $data array of lines to add to the buffer
 	 */
-	public function addToLineBuffer($array) {
+	public function addToLinesBuffer($data) {
 
 		// Get current terminal size
 		$tty_size = $this->getTtySize();
 
-		// Reset output buffer
-		$this->line_buffer = array();
-
 		// Loop through data so we can split lines at terminal size
-		for ($i=0; $i<count($array); $i++) {
+		for ($i=0; $i<count($data); $i++) {
 
 			// Add newlines to the end of each proper line
-			$array[$i] .= "\n";
+			$data[$i] .= "\n";
 
 			// Split line at terminal width and add to output
-			foreach (str_split($array[$i], (int)$tty_size[1]) as $line) {
+			foreach (str_split($data[$i], (int)$tty_size[1]) as $line) {
 				$this->line_buffer[] = $line;
 			}
 		}
