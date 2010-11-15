@@ -98,7 +98,7 @@ class MatrixSqlTerminal {
 			$line = $this->shell->readline($this->dsn['DSN'] . $prompt);
 		
 			// Exits
-			if ((substr($line, 0, 4) == 'exit') || (substr($line, 0, 4) == 'quit')) {
+			if ((substr(trim($line), 0, 4) == 'exit') || (substr(trim($line), 0, 4) == 'quit') || (substr(trim($line), 0, 2) == '\q')) {
 				echo "\n";
 				exit;
 			}
