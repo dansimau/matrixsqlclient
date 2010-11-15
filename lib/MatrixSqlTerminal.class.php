@@ -218,7 +218,7 @@ class MatrixSqlTerminal {
 	 * @return array An array with two elements - number of rows and number of columns.
 	 */
 	public function getTtySize() {
-		return explode(' ', `stty size`);
+		return explode("\n", `printf "lines\ncols" | tput -S`);
 	}
 
 	/**
