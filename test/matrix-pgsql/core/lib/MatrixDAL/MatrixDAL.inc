@@ -7,11 +7,32 @@ class MatrixDAL {
 		return true;
 	}
 	public static function executeSqlAssoc($a) {
+
+		$data = array();
+
 		if (strtoupper(substr($a, 0, 6)) === "SELECT") {
-			return array(
-							array('one', 'two', 'three', 'four'),
-							array('one', 'two', 'three', 'four'),
-						);
+
+			$c = substr($a, 7, strlen($a)-8);
+			if (!is_numeric($c)) $c = 5;
+
+			for ($i=1; $i<=(int)$c; $i++) {
+				$data[] = array(
+					'one'		=> "some data here $i",
+					'two'		=> "some data here $i",
+					'three'		=> "some data here $i",
+					'four'		=> "some data here $i",
+					'five'		=> "some data here $i",
+					'six'		=> "some data here $i",
+					'seven'		=> "some data here $i",
+					'eight'		=> "some data here $i",
+					'nine'		=> "some data here $i",
+					'ten'		=> "some data here $i",
+					'eleven'	=> "some data here $i",
+					'twelve'	=> "some data here $i",
+					);
+			}
+
+			return $data;
 		}
 	}
 }
