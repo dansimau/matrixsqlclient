@@ -58,7 +58,14 @@ class MatrixSqlTerminal {
 		
 		// Instantiate/initialise stuff
 		$this->shell = new SimpleReadline();
-		$this->history_storage = new HistoryStorage($_ENV['HOME'] . '/.matrixsqlclient_history', true);
+
+		// History storage
+		if (!isset($_ENV['HOME'])) {
+			$history_storage_file = '/tmp';
+		} else {
+			$history_storage_file = $_ENV['HOME'];
+		}
+		$this->history_storage = new HistoryStorage($history_storage_file . '/.matrixsqlclient_history', true);
 		$this->shell->history = $this->history_storage->getData();
 	}
 	
