@@ -36,6 +36,7 @@ require_once $SYSTEM_ROOT.'/data/private/conf/db.inc';
 error_reporting(E_ALL);
 
 // Run the terminal
-$matrixSqlTerminal = new MatrixSqlTerminal();
+$matrixSqlTerminal = new MatrixSqlTerminal('DbBackend_MatrixDAL');
+$matrixSqlTerminal->connect($GLOBALS['db_conf']);
 $matrixSqlTerminal->run();
 ?>
