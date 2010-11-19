@@ -139,6 +139,11 @@ class MatrixSqlTerminal {
 				}
 				catch (Exception $e) {
 					echo "\n" . $e->getMessage() . "\n";
+
+					// Reset the prompt cause its a new query
+					$prompt = '=# ';
+					$sql = '';
+
 					continue;
 				}
 
@@ -283,6 +288,12 @@ class MatrixSqlTerminal {
 					$c = SimpleReadline::readKey();
 
 					switch ($c) {
+
+						// 'G' -- print rest of all the output
+						case chr(71):
+							TerminalDisplay::backspace(8);
+							$this->printLines(count($this->line_buffer));
+							break;
 
 						// User wants more lines, one at a time
 						case chr(10):
