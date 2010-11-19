@@ -37,7 +37,7 @@ class ArrayToTextTable
     /**
      * @var int Max Row Width (chars)
      */
-    private $mW = 30;
+    private $mW = 10000;
 
     private $head  = false;
     private $pcen  = "+";
