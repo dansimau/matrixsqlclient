@@ -444,6 +444,8 @@ class SimpleReadline {
 
 		}
 
+		ob_start();
+
 		for ($i=0; $i<$n; $i++) {
 			if ($this->buffer_position < strlen($this->buffer)) {
 	
@@ -466,7 +468,9 @@ class SimpleReadline {
 	
 			$this->buffer_position--;
 		}
-    	
+
+		ob_end_flush();
+
 		return true;
 	}
 
