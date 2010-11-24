@@ -35,7 +35,7 @@ class InteractiveSqlTerminal {
 	 * @var $line_buffer line output buffer
 	 */
 	private $line_buffer = array();
-
+	
 	/**
 	 * Constructor - initialises Matrix DAL and attempts to connect to database
 	 *
@@ -97,7 +97,7 @@ class InteractiveSqlTerminal {
 		
 			// Prompt for input
 			$line = $this->shell->readline($this->db->getDbName() . $prompt);
-		
+
 			// Exits
 			if ((substr(trim($line), 0, 4) == 'exit') || (substr(trim($line), 0, 4) == 'quit') || (substr(trim($line), 0, 2) == '\q')) {
 				echo "\n";
@@ -107,7 +107,12 @@ class InteractiveSqlTerminal {
 				echo "\q\n";
 				exit;
 			}
-			
+
+			if (strlen($line) > 0) {
+				// Add this command to the history
+				$this->shell->readline_add_history(strtr($line, "\n", " "));
+			}
+
 			// CTRL-C cancels any current query
 			if (ord(substr($line, strlen($line)-1, strlen($line))) === 3) {
 				$sql = '';
@@ -125,9 +130,6 @@ class InteractiveSqlTerminal {
 				echo "\n";
 
 				$sql = trim($sql);
-
-				// Add this command to the history
-				$this->shell->readline_add_history($sql);
 
 				try {
 					// Run the SQL
