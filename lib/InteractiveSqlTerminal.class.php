@@ -1,6 +1,6 @@
 <?php
 /**
- * Matrix SQL client - the main class.
+ * SQL client - the main class.
  *
  * Classes this relies on:
  *  - SimpleReadline
@@ -9,7 +9,7 @@
  * @author Daniel Simmons <dan@dans.im>
  * @copyright Copyright (C) 2010 Daniel Simmons
  */
-class MatrixSqlTerminal {
+class InteractiveSqlTerminal {
 
 	/**
 	 * @var $db DbBackend object for the backend/database

@@ -18,7 +18,7 @@ if (function_exists("pcntl_signal")) {
 error_reporting(E_ALL);
 
 // Run the terminal
-$matrixSqlTerminal = new MatrixSqlTerminal('MatrixDAL');
+$matrixSqlTerminal = new InteractiveSqlTerminal('MatrixDAL');
 $matrixSqlTerminal->connect($_SERVER['argv'][1]);
 $matrixSqlTerminal->run();
 ?>
