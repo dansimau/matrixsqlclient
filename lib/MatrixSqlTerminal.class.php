@@ -90,7 +90,7 @@ class MatrixSqlTerminal {
 		if (!empty($GLOBALS['rev'])) echo ", rev " . $GLOBALS['rev'];
 		echo "), the interative database terminal in PHP.";
 		echo "\n\nYou are now connected.";
-//		echo "\nDatabase type: " . $this->db_type . ".\n";
+		echo "\nDatabase type: " . $this->db->getDbType() . $this->db->getDbVersion() . ".\n";
 		ob_end_flush();
 		
 		while (1) {

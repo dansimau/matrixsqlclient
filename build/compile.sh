@@ -23,10 +23,17 @@ cat <<EOF >>$TMPFILE
 
 EOF
 
+# Write constants to the top of the file
+for f in $FILES; do
+	cat $f |egrep '^define' >> $TMPFILE
+done
+
+echo "" >> $TMPFILE
+
 # Write each project file to single compiled version
 for f in $FILES; do
 
-	cat $f |egrep -v '<\?php|\?>' >> $TMPFILE
+	cat $f |egrep -v '<\?php|\?>|^require|^define' >> $TMPFILE
 	echo "" >> $TMPFILE
 
 done
