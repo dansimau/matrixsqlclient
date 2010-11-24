@@ -307,6 +307,19 @@ class InteractiveSqlTerminal {
 
 							break;
 
+						// Page down
+						case chr(32):
+						case chr(122):
+
+							// Backspace the "--More--"
+							TerminalDisplay::backspace(8);
+
+							$last_lines = $this->printLines($tty_size[0]-1);
+							if ($last_lines[count($last_lines)-1][strlen($last_lines[count($last_lines)-1])-1] != "\n") echo "\n";
+							echo "\033[30;47m" . "--More--" . "\033[0m";
+
+							break;
+
 						// User wants to end output (ie. 'q', CTRL+C)
 						case chr(3):
 						case chr(113):
