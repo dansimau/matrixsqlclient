@@ -163,6 +163,8 @@ class InteractiveSqlTerminal {
 				// SELECTs and default
 				else {
 
+					$this->addToLinesBuffer(array(''));
+
 					// Only render the table if rows were returned
 					if (!empty($source_data)) {
 
