@@ -1,4 +1,9 @@
 <?php
+define('UP', chr(27).chr(91).chr(65));
+define('DOWN', chr(27).chr(91).chr(66));
+define('RIGHT', chr(27).chr(91).chr(67));
+define('LEFT', chr(27).chr(91).chr(68));
+
 /**
  * Alternative readline library.
  *

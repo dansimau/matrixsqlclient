@@ -12,16 +12,11 @@
 class MatrixSqlTerminal {
 
 	/**
-	 * @var $dsn Database connection string
+	 * @var $db DbBackend object for the backend/database
 	 */
-	private $dsn = '';
-	
-	/*
-	 * @var $db_type Database type, eg. oci8, pgsql
-	 */
-	private $db_type = '';
+	private $db;
 
-	/*
+	/**
 	 * @var $tty_saved Stores stty string of saved terminal settings
 	 */
 	private $tty_saved = '';
@@ -43,19 +38,16 @@ class MatrixSqlTerminal {
 
 	/**
 	 * Constructor - initialises Matrix DAL and attempts to connect to database
+	 *
+	 * @param $backend name of backend plugin to use to connect
 	 */
-	public function __construct() {
+	public function __construct($backend) {
 
 		$this->resetTerminal(true);
 
-		// Load database DSN from Matrix's db.inc
-		$this->dsn = $GLOBALS['db_conf']['db2'];
-		$this->db_type = $GLOBALS['db_conf']['db2']['type'];
-		
-		// Attempt to connect
-		MatrixDAL::dbConnect($this->dsn, $this->db_type);
-		MatrixDAL::changeDb($this->db_type);
-		
+		// Instantiate database backend plugin
+		$this->db = new DbBackend($backend);
+
 		// Instantiate/initialise stuff
 		$this->shell = new SimpleReadline();
 
@@ -75,7 +67,16 @@ class MatrixSqlTerminal {
 	public function __destruct() {
 		$this->restoreTerminal();
 	}
-	
+
+	/**
+	 * Connects the db backend
+	 *
+	 * @param $dsn connection string for database
+	 */
+	public function connect($dsn) {
+		$this->db->connect($dsn);
+	}
+
 	/**
 	 * Starts the main interactive terminal
 	 */
@@ -89,13 +90,13 @@ class MatrixSqlTerminal {
 		if (!empty($GLOBALS['rev'])) echo ", rev " . $GLOBALS['rev'];
 		echo "), the interative database terminal in PHP.";
 		echo "\n\nYou are now connected.";
-		echo "\nDatabase type: " . $this->db_type . ".\n";
+		echo "\nDatabase type: " . $this->db->getDbType() . $this->db->getDbVersion() . ".\n";
 		ob_end_flush();
 		
 		while (1) {
 		
 			// Prompt for input
-			$line = $this->shell->readline($this->dsn['DSN'] . $prompt);
+			$line = $this->shell->readline($this->db->getDbName() . $prompt);
 		
 			// Exits
 			if ((substr(trim($line), 0, 4) == 'exit') || (substr(trim($line), 0, 4) == 'quit') || (substr(trim($line), 0, 2) == '\q')) {
@@ -128,14 +129,9 @@ class MatrixSqlTerminal {
 				// Add this command to the history
 				$this->shell->readline_add_history($sql);
 
-				// Strip semicolon from end if its Oracle
-				if ($this->db_type == 'oci') {
-				    $sql = substr($sql, 0, strlen($sql)-1);
-				}
-
 				try {
 					// Run the SQL
-					$source_data = MatrixDAL::executeSqlAssoc($sql);
+					$source_data = $this->db->execute($sql);
 				}
 				catch (Exception $e) {
 					echo "\n" . $e->getMessage() . "\n";

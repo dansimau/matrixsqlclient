@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # List of files to be included in the project
-FILES="lib/main.php lib/MatrixSqlTerminal.class.php lib/SimpleReadline.class.php lib/ArrayToTextTable.class.php lib/HistoryStorage.class.php"
+FILES="lib/main.php lib/MatrixSqlTerminal.class.php lib/SimpleReadline.class.php lib/ArrayToTextTable.class.php lib/HistoryStorage.class.php lib/DbBackend.class.php lib/DbBackend.MatrixDAL.class.php"
 
 # Make temp file
 TMPFILE="$(mktemp)"
@@ -23,10 +23,17 @@ cat <<EOF >>$TMPFILE
 
 EOF
 
+# Write constants to the top of the file
+for f in $FILES; do
+	cat $f |egrep '^define' >> $TMPFILE
+done
+
+echo "" >> $TMPFILE
+
 # Write each project file to single compiled version
 for f in $FILES; do
 
-	cat $f |egrep -v '<\?php|\?>' >> $TMPFILE
+	cat $f |egrep -v '<\?php|\?>|^require|^define' >> $TMPFILE
 	echo "" >> $TMPFILE
 
 done
