@@ -172,7 +172,7 @@ class InteractiveSqlTerminal {
 					}
 
 					// Build count summary (at end of table) and add to line buffer
-					$count_str = "\n(" . count($source_data) . " row";
+					$count_str = "(" . count($source_data) . " row";
 					if (count($source_data) !== 1) $count_str .= "s";
 					$count_str .= ")";
 
