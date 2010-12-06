@@ -4,7 +4,7 @@
 FILES="lib/main.php lib/InteractiveSqlTerminal.class.php lib/SimpleReadline.class.php lib/ArrayToTextTable.class.php lib/HistoryStorage.class.php lib/DbBackend.class.php lib/DbBackend.MatrixDAL.class.php"
 
 # Make temp file
-TMPFILE="$(mktemp)"
+TMPFILE="$(mktemp -t $(basename $0))" || exit 1
 
 REV=$(git rev-list --all |wc -l |tr -d ' ')
 DATE=$(date +%Y-%m-%d)
