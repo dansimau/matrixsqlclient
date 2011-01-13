@@ -35,6 +35,11 @@ class InteractiveSqlTerminal {
 	 * @var $line_buffer line output buffer
 	 */
 	private $line_buffer = array();
+
+	/**
+	 * @var $sql_timing Flag indicating whether query timing is displayed or not
+	 */
+	private $sql_timing = FALSE;
 	
 	/**
 	 * Constructor - initialises Matrix DAL and attempts to connect to database
@@ -120,6 +125,19 @@ class InteractiveSqlTerminal {
 				$prompt = '=# ';
 				continue;
 			}
+
+			if (substr(trim($line), 0, 7) == "\\timing") {
+
+				$this->sql_timing = !$this->sql_timing;
+
+				if ($this->sql_timing) {
+					echo "\nTiming is on.";
+				} else {
+					echo "\nTiming is off.";
+				}
+
+				continue;
+			}
 		
 			$sql .= "\n" . $line;
 
@@ -181,6 +199,11 @@ class InteractiveSqlTerminal {
 					$count_str .= ")";
 
 					$this->addToLinesBuffer(array($count_str));
+
+					if ($this->sql_timing) {
+						// Output amount of time this query took
+						$this->addToLinesBuffer(array("", "Time: " . $this->db->getQueryExecutionTime() . " ms"));
+					}
 
 					// Output the data
 					$this->printLines();

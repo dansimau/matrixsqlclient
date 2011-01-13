@@ -7,6 +7,8 @@
  */
 class DbBackend {
 
+	protected $_executionTime;
+
 	/**
 	 * @var $backend instantiated plugin class
 	 */
@@ -77,7 +79,21 @@ class DbBackend {
 	 * @return mixed data array of results, or false if the query was invalid
 	 */
 	public function execute($sql) {
-		return $this->backend->execute($sql);
+
+		$query_start_time = microtime(true);
+		$result = $this->backend->execute($sql);
+		$query_end_time = microtime(true);
+
+		$this->_executionTime = $query_end_time - $query_start_time;
+
+		return $result;
+	}
+
+	/**
+	 * Returns the execution time of the last query.
+	 */
+	public function getQueryExecutionTime() {
+		return round($this->_executionTime * 1000, 3);
 	}
 }
 

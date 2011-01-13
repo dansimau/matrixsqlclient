@@ -32,6 +32,8 @@ class MatrixDAL {
 					);
 			}
 
+			usleep(rand(0, 1500000));
+
 			return $data;
 		}
 	}
