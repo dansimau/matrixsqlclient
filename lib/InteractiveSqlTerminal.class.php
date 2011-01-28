@@ -113,17 +113,17 @@ class InteractiveSqlTerminal {
 				exit;
 			}
 
-			if (mb_strlen($line) > 0) {
-				// Add this command to the history
-				$this->shell->readline_add_history(strtr($line, "\n", " "));
-			}
-
 			// CTRL-C cancels any current query
 			if (ord(mb_substr($line, mb_strlen($line)-1, mb_strlen($line))) === 3) {
 				$sql = '';
 				$line = '';
 				$prompt = '=# ';
 				continue;
+			}
+
+			if (mb_strlen($line) > 0) {
+				// Add this command to the history
+				$this->shell->readline_add_history(strtr($line, "\n", " "));
 			}
 
 			if (mb_substr(trim($line), 0, 7) == "\\timing") {
