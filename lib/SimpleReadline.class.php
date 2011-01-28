@@ -308,7 +308,7 @@ class SimpleReadline {
 					continue;
 				} elseif ((strlen($buffer) === 2) && (ord($c) === 91)) {
 					continue;
-				} elseif (strlen($buffer === 3) && ord($c) >= 30 && ord($c) <= 57) {
+				} elseif (strlen($buffer) === 3 && ord($c) >= 30 && ord($c) <= 57) {
 					continue;
 				} else {
 					return $buffer;
