@@ -17,6 +17,8 @@ if (function_exists("pcntl_signal")) {
 
 error_reporting(E_ALL);
 
+mb_internal_encoding("UTF-8");
+
 // Run the terminal
 $matrixSqlTerminal = new InteractiveSqlTerminal('MatrixDAL');
 $matrixSqlTerminal->connect($_SERVER['argv'][1]);

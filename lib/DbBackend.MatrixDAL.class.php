@@ -79,7 +79,7 @@ class DbBackend_MatrixDAL extends DbBackendPlugin {
 
 		// Strip semicolon from end if its Oracle
 		if ($this->db_type == 'oci') {
-		    $sql = substr($sql, 0, strlen($sql)-1);
+		    $sql = mb_substr($sql, 0, mb_strlen($sql)-1);
 		}
 
 		return MatrixDAL::executeSqlAssoc($sql);

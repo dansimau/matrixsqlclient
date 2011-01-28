@@ -104,29 +104,29 @@ class InteractiveSqlTerminal {
 			$line = $this->shell->readline($this->db->getDbName() . $prompt);
 
 			// Exits
-			if ((substr(trim($line), 0, 4) == 'exit') || (substr(trim($line), 0, 4) == 'quit') || (substr(trim($line), 0, 2) == '\q')) {
+			if ((mb_substr(trim($line), 0, 4) == 'exit') || (mb_substr(trim($line), 0, 4) == 'quit') || (mb_substr(trim($line), 0, 2) == '\q')) {
 				echo "\n";
 				exit;
 			}
-			if (substr($line, strlen($line)-1, strlen($line)) === chr(4)) {
+			if (mb_substr($line, mb_strlen($line)-1, mb_strlen($line)) === chr(4)) {
 				echo "\q\n";
 				exit;
 			}
 
-			if (strlen($line) > 0) {
+			if (mb_strlen($line) > 0) {
 				// Add this command to the history
 				$this->shell->readline_add_history(strtr($line, "\n", " "));
 			}
 
 			// CTRL-C cancels any current query
-			if (ord(substr($line, strlen($line)-1, strlen($line))) === 3) {
+			if (ord(mb_substr($line, mb_strlen($line)-1, mb_strlen($line))) === 3) {
 				$sql = '';
 				$line = '';
 				$prompt = '=# ';
 				continue;
 			}
 
-			if (substr(trim($line), 0, 7) == "\\timing") {
+			if (mb_substr(trim($line), 0, 7) == "\\timing") {
 
 				$this->sql_timing = !$this->sql_timing;
 
@@ -143,7 +143,7 @@ class InteractiveSqlTerminal {
 
 			// If the current sql string buffer has a semicolon in it, we're ready to run
 			// the SQL!
-			if (strpos($sql, ';')) {
+			if (mb_strpos($sql, ';')) {
 
 				echo "\n";
 
@@ -164,18 +164,18 @@ class InteractiveSqlTerminal {
 				}
 
 				// Find out what type of query this is and what to do with it
-				if (strtoupper(substr($sql, 0, 6)) == "UPDATE") {
+				if (mb_strtoupper(mb_substr($sql, 0, 6)) == "UPDATE") {
 				    echo "UPDATE " . count($source_data);
 				}
-				elseif ((strtoupper(substr($sql, 0, 5)) == "BEGIN") ||
-				        (strtoupper(substr($sql, 0, 5)) == "START TRANSACTION")) {
+				elseif ((mb_strtoupper(mb_substr($sql, 0, 5)) == "BEGIN") ||
+				        (mb_strtoupper(mb_substr($sql, 0, 5)) == "START TRANSACTION")) {
 				    echo "BEGIN";
 				}
-				elseif ((strtoupper(substr($sql, 0, 5)) == "ABORT") ||
-				        (strtoupper(substr($sql, 0, 5)) == "ROLLBACK")) {
+				elseif ((mb_strtoupper(mb_substr($sql, 0, 5)) == "ABORT") ||
+				        (mb_strtoupper(mb_substr($sql, 0, 5)) == "ROLLBACK")) {
 				    echo "ROLLBACK";
 				}
-				elseif (strtoupper(substr($sql, 0, 6)) == "COMMIT") {
+				elseif (mb_strtoupper(mb_substr($sql, 0, 6)) == "COMMIT") {
 				    echo "COMMIT";
 				}
 				// SELECTs and default
@@ -213,7 +213,7 @@ class InteractiveSqlTerminal {
 				$prompt = '=# ';
 				$sql = '';
 		
-			} elseif (strlen(trim($sql)) > 0) {
+			} elseif (mb_strlen(trim($sql)) > 0) {
 				// We're in the middle of some SQL, so modify the prompt slightly to show that
 				// (like psql does)
 				$prompt = '-# ';
@@ -294,7 +294,7 @@ class InteractiveSqlTerminal {
 
 				// Print first chunk
 				$last_lines = $this->printLines($tty_size[0]-1);
-				if ($last_lines[count($last_lines)-1][strlen($last_lines[count($last_lines)-1])-1] != "\n") echo "\n";
+				if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") echo "\n";
 				echo "\033[30;47m" . "--More--" . "\033[0m";
 
 				// Print rest of the chunks
@@ -325,7 +325,7 @@ class InteractiveSqlTerminal {
 							TerminalDisplay::backspace(8);
 
 							$last_lines = $this->printLines(1);
-							if ($last_lines[count($last_lines)-1][strlen($last_lines[count($last_lines)-1])-1] != "\n") echo "\n";
+							if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") echo "\n";
 							echo "\033[30;47m" . "--More--" . "\033[0m";
 
 							break;
@@ -338,7 +338,7 @@ class InteractiveSqlTerminal {
 							TerminalDisplay::backspace(8);
 
 							$last_lines = $this->printLines($tty_size[0]-1);
-							if ($last_lines[count($last_lines)-1][strlen($last_lines[count($last_lines)-1])-1] != "\n") echo "\n";
+							if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") echo "\n";
 							echo "\033[30;47m" . "--More--" . "\033[0m";
 
 							break;
