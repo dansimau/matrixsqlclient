@@ -192,7 +192,7 @@ class SimpleReadline {
 				default:
 				
 					// Ignore unknown control characters
-					if (preg_match('/[[:cntrl:]]+/', $c)) {
+					if (ord($c[0]) === 27) {
 						self::bell();
 						continue;
 					}
@@ -304,13 +304,14 @@ class SimpleReadline {
 			// Handle control characters
 			if (ord($buffer[0]) === 27) {
 
-				if (strlen($buffer === 1) && (ord($c) === 91)) {
+				if ((strlen($buffer) === 1) && (ord($c) === 27)) {
 					continue;
-				} elseif (strlen($buffer >= 2) && strlen($buffer <= 3) && ord($c) >= 30 && ord($c) <= 57) {
+				} elseif ((strlen($buffer) === 2) && (ord($c) === 91)) {
+					continue;
+				} elseif (strlen($buffer === 3) && ord($c) >= 30 && ord($c) <= 57) {
 					continue;
 				} else {
-					// This is not what we expected - some kind of bad control character
-					return NULL;
+					return $buffer;
 				}
 			}
 
@@ -442,7 +443,7 @@ class SimpleReadline {
 		if ($this->buffer_position < mb_strlen($this->buffer)) {
 
 			for ($i=0; $i<$n; $i++) {
-				echo $this->buffer[$this->buffer_position];
+				echo mb_substr($this->buffer, $this->buffer_position, 1);
 				$this->buffer_position++;
 			}
 
