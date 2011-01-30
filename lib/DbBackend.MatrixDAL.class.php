@@ -98,7 +98,6 @@ class DbBackend_MatrixDAL extends DbBackendPlugin {
 		switch ($this->db_type) {
 
 			case 'pgsql':
-
 				$sql = <<<EOF
 					SELECT
 					  c.relname as "Name"
@@ -112,10 +111,28 @@ class DbBackend_MatrixDAL extends DbBackendPlugin {
 EOF;
 				break;
 
+			case 'oci':
+				// Cheeky UNION here to allow tab completion to work for both all-upper OR
+				// all-lowercase table names (only for MatrixDAL/oci, so users can be lazy)
+				$sql = "SELECT tname FROM tab UNION SELECT LOWER(tname) FROM tab";
+				break;
 		}
 
-		return MatrixDAL::executeSqlAssoc($sql, 0);
+		// We only know queries for pgsql and oci
+		if ($sql === '') {
+			$names = array();
 
+		} else {
+
+			try {
+				$names = MatrixDAL::executeSqlAssoc($sql, 0);
+			}
+			catch (Exception $e) {
+				$names = array();
+			}
+		}
+
+		return $names;
 	}
 }
 ?>
