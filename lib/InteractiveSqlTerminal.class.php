@@ -406,12 +406,16 @@ class InteractiveSqlTerminal {
 	 */
 	public function autoCompleteText($hint) {
 
-		$tables = $this->db->getTableNames();
-
 		$last_word = mb_substr($hint, mb_strrpos($hint, ' ')+1);
 
-		$matches = array();
+		// $hint ends in a space - so no completion to be done
+		if (empty($last_word)) {
+			return array();
+		}
 
+		$tables = $this->db->getTableNames();
+
+		$matches = array();
 		foreach ($tables as $table) {
 			if (mb_strpos($table, $last_word) === 0) {
 				$matches[] = mb_substr($table, mb_strlen($last_word));
