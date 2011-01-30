@@ -545,6 +545,9 @@ class SimpleReadline {
 		$temp_str = rtrim($temp_str);
 
 		// Get first reverse matching space
+		if (mb_strlen($temp_str) === 0) {
+			return 0;
+		}
 		$prev_word_pos = mb_strrpos($temp_str, ' ');
 
 		// Add one, which is the beginning of the previous word (unless we're at the beginning of the line)
