@@ -19,7 +19,6 @@ class DbBackend_MatrixDAL extends DbBackendPlugin {
 	private $db_type = '';
 
 	private $macros = array();
-	private $complex_macros = array();
 
 	public function __construct() {
 
@@ -44,16 +43,6 @@ class DbBackend_MatrixDAL extends DbBackendPlugin {
 			
 			"oci" => array(
 				"\dt" => "SELECT * FROM tab;",
-			),
-		);
-
-		$this->complex_macros = array(
-			"oci" => array(
-				array(
-					"match"			=> "limit",
-					"pattern"		=> "/(.*)(WHERE)(.*)LIMIT\s(\d)(.*)/i",
-					"replacement"	=> "\${1}\${2} ROWNUM >= 1 AND ROWNUM <= \${4} AND\${3} \${5}",
-				),
 			),
 		);
 	}
@@ -128,21 +117,10 @@ class DbBackend_MatrixDAL extends DbBackendPlugin {
 			}
 		}
 
-		// Check/apply regex macros
-		if (isset($this->complex_macros[$this->db_type])) {
-			foreach ($this->complex_macros[$this->db_type] as $macro) {
-				if (strpos(strtolower($sql), strtolower($macro['match'])) > 0) {
-					$sql = preg_replace($macro['pattern'], $macro['replacement'], $sql);
-				}
-			}
-		}
-
 		// Strip semicolon from end if its Oracle
 		if ($this->db_type == 'oci') {
 		    $sql = mb_substr($sql, 0, mb_strlen($sql)-1);
 		}
-
-//var_dump($sql);
 
 		return MatrixDAL::executeSqlAssoc($sql);
 	}
