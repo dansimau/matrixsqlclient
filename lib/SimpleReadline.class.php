@@ -103,12 +103,20 @@ class SimpleReadline {
 				// TAB
 				case chr(9):
 
-					$autocomplete_text = $this->callAutocomplete($this->buffer);
+					// If autocompletion is registered, then do it
+					if ($this->callbackAutocompleteFunction !== NULL) {
 
-					if (!empty($autocomplete_text)) {
-						$this->insertIntoBuffer($autocomplete_text);
+						$autocomplete_text = $this->callAutocomplete($this->buffer);
+
+						if (!empty($autocomplete_text)) {
+							$this->insertIntoBuffer($autocomplete_text);
+						} else {
+							self::bell();
+						}
+
+					// Otherwise, TAB will insert four spaces
 					} else {
-						self::bell();
+						$this->insertIntoBuffer("    ");
 					}
 
 					break;

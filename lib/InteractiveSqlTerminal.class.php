@@ -42,6 +42,11 @@ class InteractiveSqlTerminal {
 	private $sql_timing = FALSE;
 	
 	/**
+	 * @var $sql_timing Flag indicating whether tab completion is on or not
+	 */
+	private $tab_completion = FALSE;
+	
+	/**
 	 * Constructor - initialises Matrix DAL and attempts to connect to database
 	 *
 	 * @param $backend name of backend plugin to use to connect
