@@ -175,12 +175,12 @@ class InteractiveSqlTerminal {
 
 				continue;
 			}
-		
+
 			$sql .= "\n" . $line;
 
-			// If the current sql string buffer has a semicolon in it, we're ready to run
-			// the SQL!
-			if (mb_strpos($sql, ';')) {
+			// If the SQL string is terminated with a semicolon, or the DB module wants
+			// to accept it (eg. for a macro), then execute it
+			if ($this->db->matchesMacro($sql) || mb_strpos($sql, ';')) {
 
 				echo "\n";
 

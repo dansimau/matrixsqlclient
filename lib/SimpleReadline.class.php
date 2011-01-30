@@ -284,7 +284,7 @@ class SimpleReadline {
 	private function processInternalCommand($command) {
 
 		// debug command
-		if (mb_substr($command, 0, 2) === "\d") {
+		if (mb_substr($command, 0, 6) === "\debug") {
 
 			if ($this->debug) {
 				echo "\ndebug mode off.\n";

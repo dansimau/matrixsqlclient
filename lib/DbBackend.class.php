@@ -99,6 +99,13 @@ class DbBackend {
 	public function getTableNames() {
 		return $this->backend->getTableNames();
 	}
+
+	/**
+	 * Checks to see if the current line matches an internal command.
+	 */
+	public function matchesMacro($s) {
+		return $this->backend->matchesMacro($s);
+	}
 }
 
 abstract class DbBackendPlugin {
@@ -107,5 +114,6 @@ abstract class DbBackendPlugin {
 	abstract public function disconnect();
 	abstract public function execute($sql);
 	abstract public function getTableNames();
+	abstract public function matchesMacro($s);
 }
 ?>
