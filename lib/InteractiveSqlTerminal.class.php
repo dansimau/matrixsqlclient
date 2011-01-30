@@ -40,6 +40,9 @@ class InteractiveSqlTerminal {
 	 * @var $options An array with a list of options and values
 	 */
 	private $options = array(
+		'HISTSIZE' => 500,
+		'timing' => "off",
+		'disable-completion' => "off"
 	);
 
 	/**
@@ -164,6 +167,7 @@ class InteractiveSqlTerminal {
 
 				// "set" a particular value
 				} else {
+
 					$params = array_pad($params, 3, "");
 					$this->setOption($params[1], $params[2]);
 					$this->parseOptions();
@@ -480,13 +484,15 @@ class InteractiveSqlTerminal {
 		$value = FALSE;
 
 		if (isset($this->options[$option])) {
-			switch (trim(strtolower($this->options[$option]))) {
+
+			$value = trim(strtolower($this->options[$option]));
+
+			switch ($value) {
 
 				case "yes":
 				case "on":
 				case "1":
 				case 1:
-				case TRUE:
 					$value = TRUE;
 					break;
 
@@ -494,7 +500,6 @@ class InteractiveSqlTerminal {
 				case "no":
 				case "0":
 				case 0:
-				case FALSE:
 					$value = FALSE;
 					break;
 			}
@@ -515,6 +520,9 @@ class InteractiveSqlTerminal {
 		} else {
 			$this->shell->registerAutocompleteFunc(NULL);
 		}
+
+		// Set maximum history size
+		$this->history_storage->setMaxSize($this->getOptionValue("HISTSIZE"));
 	}
 }
 ?>

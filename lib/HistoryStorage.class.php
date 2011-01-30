@@ -23,6 +23,11 @@ class HistoryStorage {
 	private $autosave = FALSE;
 
 	/**
+	 * @var integer the maximum number of items that will be saved to file
+	 */
+	private $maxsize = 500;
+
+	/**
 	 * Constructor
 	 */
 	function __construct($file, $autosave=FALSE) {
@@ -59,6 +64,11 @@ class HistoryStorage {
 	 * Saves contents of memory into file.
 	 */
 	function save() {
+
+		while (count($this->data) > $this->maxsize) {
+			array_shift($this->data);
+		}
+
 		return @file_put_contents($this->file, implode("\n", $this->data));
 	}
 
@@ -78,6 +88,21 @@ class HistoryStorage {
 		} else {
 			return false;
 		}
+	}
+
+	/**
+	 * Sets the maximum number of lines that will be saved to file.
+	 */
+	function setMaxSize($n) {
+		$this->maxsize = (int)$n;
+	}
+
+	/**
+	 * Shows the the maximum number of lines that will be saved to file as per the
+	 * current configuration.
+	 */
+	function getMaxSize($n) {
+		return $this->maxsize;
 	}
 }
 ?>
