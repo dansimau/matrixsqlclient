@@ -84,5 +84,38 @@ class DbBackend_MatrixDAL extends DbBackendPlugin {
 
 		return MatrixDAL::executeSqlAssoc($sql);
 	}
+
+
+	/**
+	 * Gets a list of the table names for autocompletion.
+	 *
+	 * @returns array a list of all tables in the database
+	 */
+	public function getTableNames() {
+
+		$sql = '';
+
+		switch ($this->db_type) {
+
+			case 'pgsql':
+
+				$sql = <<<EOF
+					SELECT
+					  c.relname as "Name"
+					FROM pg_catalog.pg_class c
+					     JOIN pg_catalog.pg_roles r ON r.oid = c.relowner
+					     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+					WHERE c.relkind IN ('r','')
+					      AND n.nspname NOT IN ('pg_catalog', 'pg_toast')
+					      AND pg_catalog.pg_table_is_visible(c.oid)
+					ORDER BY 1;
+EOF;
+				break;
+
+		}
+
+		return MatrixDAL::executeSqlAssoc($sql, 0);
+
+	}
 }
 ?>
