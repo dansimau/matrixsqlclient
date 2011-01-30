@@ -608,14 +608,18 @@ class SimpleReadline {
 		// Get available string tail matches
 		$matches = call_user_func($this->callbackAutocompleteFunction, $hint);
 
-		// At the moment, we only support autocompleting if there's a single match
-		if (empty($matches) || $matches[0] === "") {
+		if (empty($matches)) {
 			return FALSE;
 		}
 
 		// If there's only one match, return it, along with a space on the end
 		if (count($matches) === 1) {
 			return $matches[0] . " ";
+		}
+
+		// At the moment, we only support in-line autocompletion
+		if ($matches[0] === "") {
+			return FALSE;
 		}
 
 		// Otherwise, let's complete as many common letters as we can...
