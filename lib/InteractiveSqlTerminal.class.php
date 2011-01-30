@@ -37,15 +37,11 @@ class InteractiveSqlTerminal {
 	private $line_buffer = array();
 
 	/**
-	 * @var $sql_timing Flag indicating whether query timing is displayed or not
+	 * @var $options An array with a list of options and values
 	 */
-	private $sql_timing = FALSE;
-	
-	/**
-	 * @var $sql_timing Flag indicating whether tab completion is on or not
-	 */
-	private $tab_completion = FALSE;
-	
+	private $options = array(
+	);
+
 	/**
 	 * Constructor - initialises Matrix DAL and attempts to connect to database
 	 *
@@ -70,8 +66,8 @@ class InteractiveSqlTerminal {
 		$this->history_storage = new HistoryStorage($history_storage_file . '/.matrixsqlclient_history', true);
 		$this->shell->history = $this->history_storage->getData();
 
-		// Register autocomplete function
-		$this->shell->registerAutocompleteFunc(array($this, "autoCompleteText"));
+		// Parse options; set autocomplete on/off, etc.
+		$this->parseOptions();
 	}
 	
 	/**
@@ -136,12 +132,41 @@ class InteractiveSqlTerminal {
 
 			if (mb_substr(trim($line), 0, 7) == "\\timing") {
 
-				$this->sql_timing = !$this->sql_timing;
+				$this->setOption("timing", !$this->getOptionValue("timing"));
 
-				if ($this->sql_timing) {
+				if ($this->getOptionValue("timing")) {
 					echo "\nTiming is on.";
 				} else {
 					echo "\nTiming is off.";
+				}
+
+				continue;
+			}
+
+			// "\set" command
+			if (strlen(trim($sql)) === 0 && mb_substr(trim($line), 0, 4) == "\set") {
+
+				$params = explode(" ", $line, 3);
+
+				// "\set" with no options - show existing options/values
+				if (count($params) === 1) {
+
+					$options = $this->getOptions();
+
+					if (count($options) > 0) {
+
+						foreach ($this->getOptions() as $option => $value) {
+							$value = ($value === TRUE) ? "on" : $value;
+							$value = ($value === FALSE) ? "off" : $value;
+							echo "\n" . $option . " = '" . $value . "'";
+						}
+					}
+
+				// "set" a particular value
+				} else {
+					$params = array_pad($params, 3, "");
+					$this->setOption($params[1], $params[2]);
+					$this->parseOptions();
 				}
 
 				continue;
@@ -208,7 +233,7 @@ class InteractiveSqlTerminal {
 
 					$this->addToLinesBuffer(array($count_str));
 
-					if ($this->sql_timing) {
+					if ($this->getOptionValue("timing")) {
 						// Output amount of time this query took
 						$this->addToLinesBuffer(array("", "Time: " . $this->db->getQueryExecutionTime() . " ms"));
 					}
@@ -428,6 +453,68 @@ class InteractiveSqlTerminal {
 		}
 
 		return $matches;
+	}
+
+	/**
+	 * Set an sqlclient option.
+	 */
+	public function setOption($option, $value) {
+		$this->options[$option] = $value;
+	}
+
+	/**
+	 * Get all the sqlclient options.
+	 */
+	public function getOptions() {
+		return $this->options;
+	}
+
+	/**
+	 * Get an sqlclient option value.
+	 *
+	 * @param $option the name of the option to get the current value of
+	 * @returns mixed the value of the specified option
+	 */
+	public function getOptionValue($option) {
+
+		$value = FALSE;
+
+		if (isset($this->options[$option])) {
+			switch (trim(strtolower($this->options[$option]))) {
+
+				case "yes":
+				case "on":
+				case "1":
+				case 1:
+				case TRUE:
+					$value = TRUE;
+					break;
+
+				case "off":
+				case "no":
+				case "0":
+				case 0:
+				case FALSE:
+					$value = FALSE;
+					break;
+			}
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Performs one-time action things that need to be done when options are
+	 * toggled on or off.
+	 */
+	public function parseOptions() {
+
+		// Register autocomplete function
+		if (!$this->getOptionValue("disable-completion")) {
+			$this->shell->registerAutocompleteFunc(array($this, "autoCompleteText"));
+		} else {
+			$this->shell->registerAutocompleteFunc(NULL);
+		}
 	}
 }
 ?>
