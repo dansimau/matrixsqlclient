@@ -44,7 +44,12 @@ class SimpleReadline {
 	 * @var Stores current cursor position
 	 */
 	private $buffer_position = 0;
-	
+
+	/**
+	 * @var Name of the user-defined function that is called for autocompletion
+	 */
+	private $callbackAutocompleteFunction = NULL;
+
 	/**
 	 * Resets buffer information and position.
 	 */
@@ -93,6 +98,19 @@ class SimpleReadline {
 				// NULL - unrecognised character
 				case NULL:
 					$this->bell();
+					break;
+
+				// TAB
+				case chr(9):
+
+					$autocomplete_text = $this->callAutocomplete($this->buffer);
+
+					if (!empty($autocomplete_text)) {
+						$this->insertIntoBuffer($autocomplete_text);
+					} else {
+						self::bell();
+					}
+
 					break;
 
 				// CTRL-A (Home) - move the cursor all the way to the left
@@ -196,28 +214,9 @@ class SimpleReadline {
 						self::bell();
 						continue;
 					}
-				
-					if ($this->buffer_position < mb_strlen($this->buffer)) {
-					
-						// If the cursor is in the middle of the line...
-						$head = mb_substr($this->buffer, 0, $this->buffer_position);
-						$tail = mb_substr($this->buffer, $this->buffer_position, mb_strlen($this->buffer));
-						
-						ob_start();
-						echo $c . $tail;
-						TerminalDisplay::left(mb_strlen($tail));
-						$this->buffer = $head . $c . $tail;
-						ob_end_flush();
 
-					} else {
-
-						// Otherwise just echo it don't worry about the other stuff
-						$this->buffer .= $c;
-						echo $c;
-					}
-
-					$this->buffer_position++;
-					$this->history_tmp[$this->history_position] = $this->buffer;
+					// Okay, finally... insert this character into the buffer and move on
+					$this->insertIntoBuffer($c);
 			}
 
 			if ($this->debug) {
@@ -247,6 +246,31 @@ class SimpleReadline {
 				return $line;
 			}
 		}
+	}
+
+	private function insertIntoBuffer($c) {
+
+		// If the cursor is in the middle of the line...
+		if ($this->buffer_position < mb_strlen($this->buffer)) {
+
+			$head = mb_substr($this->buffer, 0, $this->buffer_position);
+			$tail = mb_substr($this->buffer, $this->buffer_position, mb_strlen($this->buffer));
+
+			ob_start();
+			echo $c . $tail;
+			TerminalDisplay::left(mb_strlen($tail));
+			$this->buffer = $head . $c . $tail;
+			ob_end_flush();
+
+		} else {
+
+			// Otherwise just append/echo it don't worry about the other stuff
+			$this->buffer .= $c;
+			echo $c;	// User's terminal must take care of multibyte characters
+		}
+
+		$this->buffer_position = $this->buffer_position + mb_strlen($c);
+		$this->history_tmp[$this->history_position] = $this->buffer;
 	}
 
 	private function processInternalCommand($command) {
@@ -391,17 +415,17 @@ class SimpleReadline {
 			$this->backspace($this->buffer_position);
 
 			// Move forward/back n number of positions
-    		$this->history_position = $this->history_position + $n;
+			$this->history_position = $this->history_position + $n;
 	
-	   		// Print history item and set buffer
+			// Print history item and set buffer
 			echo $this->history_tmp[$this->history_position];
-	   		$this->buffer = $this->history_tmp[$this->history_position];
-	   		$this->buffer_position = mb_strlen($this->buffer);
-	   		
-	   		ob_end_flush();
-	   		
-	   		return true;
-    	}
+			$this->buffer = $this->history_tmp[$this->history_position];
+			$this->buffer_position = mb_strlen($this->buffer);
+
+			ob_end_flush();
+
+			return true;
+		}
 
 	}
 	
@@ -447,14 +471,14 @@ class SimpleReadline {
 				$this->buffer_position++;
 			}
 
-    		return true;
+			return true;
 
-    	} else {
-    	
-    		// Return false if the cursor is already at the end of the line
-    		return false;
-    	}
-    }
+		} else {
+
+			// Return false if the cursor is already at the end of the line
+			return false;
+		}
+	}
 
 	/**
 	 * Backspaces characters.
@@ -512,15 +536,15 @@ class SimpleReadline {
 		// Remove trailing spaces on the end
 		$temp_str = rtrim($temp_str);
 
-	    // Get first reverse matching space
-	    $prev_word_pos = mb_strrpos($temp_str, ' ');
+		// Get first reverse matching space
+		$prev_word_pos = mb_strrpos($temp_str, ' ');
 
 		// Add one, which is the beginning of the previous word (unless we're at the beginning of the line)
-	    if ($prev_word_pos > 0) {
+		if ($prev_word_pos > 0) {
 			$prev_word_pos++;
-	    }
+		}
 
-	    return $prev_word_pos;
+		return $prev_word_pos;
 	}
 
 	/**
@@ -541,17 +565,17 @@ class SimpleReadline {
 		// Trimmed spaces
 		$trimmed_spaces = $temp_str_len - mb_strlen($temp_str);
 
-	    // Get first matching space
-	    $next_word_pos = mb_strpos($temp_str, ' ');
+		// Get first matching space
+		$next_word_pos = mb_strpos($temp_str, ' ');
 
-	    // If there is no matching space, we're at the end of the string
-	    if ($next_word_pos === FALSE) {
+		// If there is no matching space, we're at the end of the string
+		if ($next_word_pos === FALSE) {
 			$next_word_pos = mb_strlen($this->buffer);
-	    } else {
+		} else {
 			$next_word_pos = $this->buffer_position + $trimmed_spaces + $next_word_pos;
-	    }
+		}
 
-	    return $next_word_pos;
+		return $next_word_pos;
 	}
 
 	/**
@@ -559,6 +583,71 @@ class SimpleReadline {
 	 */
 	public static function bell() {
 		echo chr(7);
+	}
+
+	/**
+	 * Registers the function that will be called when TAB is pressed on the prompt:
+	 * function takes one parameter, the "hint", and returns the extra text to be
+	 * added to the current line
+	 *
+	 * @param $f callback the function to call for autocompletion
+	 */
+	public function registerAutocompleteFunc($f) {
+		$this->callbackAutocompleteFunction = $f;
+	}
+
+	/**
+	 * Calls user-defined autocomplete function to complete the current string.
+	 */
+	public function callAutocomplete($hint) {
+
+		if ($this->callbackAutocompleteFunction === NULL) {
+			return FALSE;
+		}
+
+		// Get available string tail matches
+		$matches = call_user_func($this->callbackAutocompleteFunction, $hint);
+
+		// At the moment, we only support autocompleting if there's a single match
+		if (empty($matches) || $matches[0] === "") {
+			return FALSE;
+		}
+
+		// If there's only one match, return it, along with a space on the end
+		if (count($matches) === 1) {
+			return $matches[0] . " ";
+		}
+
+		// Otherwise, let's complete as many common letters as we can...
+
+		$finalAutocompleteString = '';
+
+		// Explode each character of each match into it's own array
+		$candidate_map = array();
+		foreach ($matches as $match) {
+			$candidate_map[] = preg_split('/(?<!^)(?!$)/u', $match); // preg_split here for multibyte chars
+		}
+
+		// Sort matches by length, shortest first
+		usort($candidate_map, 'sortArrayByLength');
+
+		for ($i=0; $i<count($candidate_map[0]); $i++) {	// "Best match" can't be longer than shortest candidate
+
+			$chars = array();
+
+			// Get all the letters at position $i from all candidates
+			foreach ($candidate_map as &$candidate) {
+				$chars[] = $candidate[$i];
+			}
+
+			// Check if they are all the same letter
+			$chars_uniq = array_unique($chars);
+			if (count($chars_uniq) === 1) {
+				$finalAutocompleteString .= $chars_uniq[0];
+			}
+		}
+
+		return $finalAutocompleteString;
 	}
 }
 
@@ -573,5 +662,9 @@ class TerminalDisplay {
 		for ($i=0; $i<$count; $i++) echo ' ';
 		self::left($count);
 	}
+}
+
+function sortArrayByLength($a,$b){
+	return count($a)-count($b);
 }
 ?>

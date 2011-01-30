@@ -64,6 +64,9 @@ class InteractiveSqlTerminal {
 		}
 		$this->history_storage = new HistoryStorage($history_storage_file . '/.matrixsqlclient_history', true);
 		$this->shell->history = $this->history_storage->getData();
+
+		// Register autocomplete function
+		$this->shell->registerAutocompleteFunc(array($this, "autoCompleteText"));
 	}
 	
 	/**
@@ -165,18 +168,18 @@ class InteractiveSqlTerminal {
 
 				// Find out what type of query this is and what to do with it
 				if (mb_strtoupper(mb_substr($sql, 0, 6)) == "UPDATE") {
-				    echo "UPDATE " . count($source_data);
+					echo "UPDATE " . count($source_data);
 				}
 				elseif ((mb_strtoupper(mb_substr($sql, 0, 5)) == "BEGIN") ||
-				        (mb_strtoupper(mb_substr($sql, 0, 5)) == "START TRANSACTION")) {
-				    echo "BEGIN";
+						(mb_strtoupper(mb_substr($sql, 0, 5)) == "START TRANSACTION")) {
+					echo "BEGIN";
 				}
 				elseif ((mb_strtoupper(mb_substr($sql, 0, 5)) == "ABORT") ||
-				        (mb_strtoupper(mb_substr($sql, 0, 5)) == "ROLLBACK")) {
-				    echo "ROLLBACK";
+						(mb_strtoupper(mb_substr($sql, 0, 5)) == "ROLLBACK")) {
+					echo "ROLLBACK";
 				}
 				elseif (mb_strtoupper(mb_substr($sql, 0, 6)) == "COMMIT") {
-				    echo "COMMIT";
+					echo "COMMIT";
 				}
 				// SELECTs and default
 				else {
@@ -305,7 +308,7 @@ class InteractiveSqlTerminal {
 						// Backspace the "--More--"
 						TerminalDisplay::backspace(8);
 						break;
-    				}
+					}
 
 					// Read user input
 					$c = SimpleReadline::readKey();
@@ -393,6 +396,29 @@ class InteractiveSqlTerminal {
 	 */
 	public function clearLineBuffer() {
 		$this->line_buffer = array();
+	}
+
+	/**
+	 * Provides autocompletion for the given text.
+	 *
+	 * @param $hint string Current non-completed text string
+	 * @returns string Autocomplete matches
+	 */
+	public function autoCompleteText($hint) {
+
+		$tables = $this->db->getTableNames();
+
+		$last_word = mb_substr($hint, mb_strrpos($hint, ' ')+1);
+
+		$matches = array();
+
+		foreach ($tables as $table) {
+			if (mb_strpos($table, $last_word) === 0) {
+				$matches[] = mb_substr($table, mb_strlen($last_word));
+			}
+		}
+
+		return $matches;
 	}
 }
 ?>

@@ -95,6 +95,10 @@ class DbBackend {
 	public function getQueryExecutionTime() {
 		return round($this->_executionTime * 1000, 3);
 	}
+
+	public function getTableNames() {
+		return $this->backend->getTableNames();
+	}
 }
 
 abstract class DbBackendPlugin {
@@ -102,5 +106,6 @@ abstract class DbBackendPlugin {
 	abstract public function getDbName();
 	abstract public function disconnect();
 	abstract public function execute($sql);
+	abstract public function getTableNames();
 }
 ?>
