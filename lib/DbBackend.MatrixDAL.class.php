@@ -42,7 +42,7 @@ class DbBackend_MatrixDAL extends DbBackendPlugin {
 			),
 			
 			"oci" => array(
-				"\dt" => "SELECT * FROM tab;",
+				"\dt" => "SELECT * FROM tab ORDER BY tname ASC;",
 			),
 		);
 	}
