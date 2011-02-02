@@ -127,7 +127,6 @@ class SimpleReadline
 		$this->_reset();
 	
 		// Output prompt
-
 		if ($prompt !== null) {
 			$this->_prompt = $prompt;
 			echo $prompt;

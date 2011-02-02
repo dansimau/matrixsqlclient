@@ -110,6 +110,11 @@ class InteractiveSqlTerminal
 			// Prompt for input
 			$line = $this->_shell->readline($this->_db->getDbName() . $prompt);
 
+			if ($line === "") {
+				echo "\n";
+				continue;
+			}
+
 			// Exits
 			if ((mb_substr(trim($line), 0, 4) == 'exit') || (mb_substr(trim($line), 0, 4) == 'quit') || (mb_substr(trim($line), 0, 2) == '\q')) {
 				echo "\n";
@@ -125,6 +130,7 @@ class InteractiveSqlTerminal
 				$sql = '';
 				$line = '';
 				$prompt = '=# ';
+				echo "\n";
 				continue;
 			}
 
@@ -143,6 +149,7 @@ class InteractiveSqlTerminal
 					echo "\nTiming is off.";
 				}
 
+				echo "\n";
 				continue;
 			}
 
@@ -173,6 +180,7 @@ class InteractiveSqlTerminal
 					$this->_parseOptions();
 				}
 
+				echo "\n";
 				continue;
 			}
 
@@ -197,6 +205,7 @@ class InteractiveSqlTerminal
 					$prompt = '=# ';
 					$sql = '';
 
+					echo "\n";
 					continue;
 				}
 
@@ -242,7 +251,12 @@ class InteractiveSqlTerminal
 			} elseif (mb_strlen(trim($sql)) > 0) {
 				// We're in the middle of some SQL, so modify the prompt slightly to show that
 				// (like psql does)
-				$prompt = '-# ';
+				if ((substr_count($sql, "(") > substr_count($sql, ")"))) {
+					$prompt = '(# ';
+				} else {
+					$prompt = '-# ';
+				}
+				echo "\n";
 			}
 		}
 	}

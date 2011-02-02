@@ -151,11 +151,40 @@ class DbBackend_MatrixDAL extends DbBackendPlugin
 		}
 
 		// Check what kind of query it is
-		if (mb_substr(mb_strtoupper($sql), 0, 6) === "SELECT") {
-			$output = MatrixDAL::executeSqlAssoc($sql);
-		} else {
-			$rows_affected = MatrixDAL::executeSql($sql);
-			$output = mb_strtoupper(mb_substr($sql, 0, 6)) . " " . $rows_affected;
+		$query_type = $this->_getQueryType($sql);
+		switch ($query_type) {
+
+			case "SELECT":
+				$output = MatrixDAL::executeSqlAssoc($sql);
+				break;
+
+			case "UPDATE":
+			case "INSERT":
+				$rows_affected = MatrixDAL::executeSql($sql);
+				$output = $query_type . " " . $rows_affected;
+				break;
+
+			case "BEGIN":
+				/* There is no return bool code, but according to PHP docs an exception will
+				   be thrown if the DB doesn't support transactions */
+				MatrixDAL::beginTransaction();
+				$output = $query_type;
+				break;
+
+			case "ROLLBACK":
+				MatrixDAL::rollBack();
+				$output = $query_type;
+				break;
+
+			case "COMMIT":
+				MatrixDAL::commit();
+				$output = $query_type;
+				break;
+
+			default:
+				//echo "WARNING: Query type not recognised.\n";
+				$output = MatrixDAL::executeSqlAssoc($sql);
+				break;
 		}
 
 		return $output;
@@ -272,6 +301,40 @@ EOF;
 	public function matchesMacro($s)
 	{
 		return array_key_exists(trim($s), $this->_macros[$this->_db_type]);
+	}
+
+	/**
+	 * Returns the type of input query this is. Eg. SELECT, UPDATE, INSERT, etc.
+	 *
+	 * @param string $input_query The SQL string
+	 *
+	 * @return mixed A string containing type of query, in uppercase, or false
+	 */
+	private function _getQueryType($input_query)
+	{
+		$input_query = mb_strtoupper($input_query);
+
+		if (mb_strpos($input_query, "SELECT") === 0) {
+			$type = "SELECT";
+		} elseif (mb_strpos($input_query, "UPDATE") === 0) {
+			$type = "UPDATE";
+		} elseif (mb_strpos($input_query, "INSERT INTO") === 0) {
+			$type = "INSERT";
+		} elseif (mb_strpos($input_query, "BEGIN") === 0) {
+			$type = "BEGIN";
+		} elseif (mb_strpos($input_query, "START TRANSACTION") === 0) {
+			$type = "BEGIN";
+		} elseif (mb_strpos($input_query, "ABORT") === 0) {
+			$type = "ROLLBACK";
+		} elseif (mb_strpos($input_query, "ROLLBACK") === 0) {
+			$type = "ROLLBACK";
+		} elseif (mb_strpos($input_query, "COMMIT") === 0) {
+			$type = "COMMIT";
+		} else {
+			$type = false;
+		}
+
+		return $type;
 	}
 }
 ?>
