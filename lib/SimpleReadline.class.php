@@ -694,8 +694,8 @@ class SimpleReadline {
 
 		// Get length of the longest match (for spacing)
 		foreach ($options as $option) {
-			if (mb_strlen($option) > $optionMaxChars) {
-				$optionMaxChars = mb_strlen($option) + 4; // +X number of spaces to pad with
+			if (mb_strlen($option)+2 > $optionMaxChars) {
+				$optionMaxChars = mb_strlen($option) + 2; // +2 spaces to pad with
 			}
 		}
 
