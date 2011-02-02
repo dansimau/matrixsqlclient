@@ -139,6 +139,7 @@ class DbBackend_MatrixDAL extends DbBackendPlugin {
 
 			case 'pgsql':
 				$sql = <<<EOF
+					-- tab-completion: table-names
 					SELECT
 					  c.relname as "Name"
 					FROM pg_catalog.pg_class c
