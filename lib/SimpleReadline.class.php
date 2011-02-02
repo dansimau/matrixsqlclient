@@ -1,11 +1,4 @@
 <?php
-/**
- * Alternative readline library.
- *
- * @author    Daniel Simmons <dan@dans.im>
- * @copyright 2010 Daniel Simmons
- */
-
 function sortArrayByLength($a,$b)
 {
 	return count($a)-count($b);
@@ -18,6 +11,12 @@ define('LEFT', chr(27).chr(91).chr(68));
 
 //system("stty raw opost -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef");
 
+/**
+ * Alternative readline library.
+ *
+ * @author    Daniel Simmons <dan@dans.im>
+ * @copyright 2010 Daniel Simmons
+ */
 class SimpleReadline
 {
 	/**
@@ -68,7 +67,8 @@ class SimpleReadline
 	/**
 	 * Adds a line to the command line history.
 	 *
-	 * @param string The line to be added in the history.
+	 * @param string $line Line to be added in the history.
+	 *
 	 * @return bool Returns true on success or false on failure.
 	 */
 	public function addHistory($line)
@@ -116,7 +116,8 @@ class SimpleReadline
 	/**
 	 * Reads a single line from the user.
 	 *
-	 * @param string prompt You may specify a string with which to prompt the user.
+	 * @param string $prompt You may specify a string with which to prompt the user.
+	 *
 	 * @return Returns a single string from the user.
 	 */
 	public function readline($prompt=null)
@@ -204,18 +205,18 @@ class SimpleReadline
 					$this->_cursorRight($this->_getNextWordPos()-$this->_buffer_position);
 					break;
 
-				case chr(3):	// CTRL-C
+				// CTRL-C
+				case chr(3):
 						$line = $this->_buffer . $c;
 						break;
 
-				case chr(4):	// CTRL-D
+				// CTRL-D
+				case chr(4):
 				
-					// Return current line immediately, with control character code on the end
+					// Return current line immediately on CTRL-D
 					if (mb_strlen($this->_buffer) === 0) {
 						$line = $this->_buffer . $c;
-					}
-					// Unless there is data in the buffer
-					else {
+					} else {
 						Terminal::bell();
 					}
 					break;
@@ -304,7 +305,9 @@ class SimpleReadline
 	 * function takes one parameter, the "hint", and returns the extra text to be
 	 * added to the current line
 	 *
-	 * @param $f callback the function to call for autocompletion
+	 * @param callback $f callback the function to call for autocompletion
+	 *
+	 * @return void
 	 */
 	public function registerAutocompleteCallback($f)
 	{
@@ -332,7 +335,9 @@ class SimpleReadline
 	/**
 	 * Backspaces characters.
 	 *
-	 * @param int count The number of characters to backspace.
+	 * @param int $n The number of characters to backspace.
+	 *
+	 * @return true on success, false on failure
 	 */
 	private function _backspace($n=1)
 	{
@@ -355,8 +360,8 @@ class SimpleReadline
 				
 				// Update buffer
 				$this->_buffer = mb_substr($head, 0, mb_strlen($head)-1) . $tail;
-			}
-			else {
+
+			} else {
 	
 				// Just backspace one char
 				$this->_buffer = mb_substr($this->_buffer, 0, mb_strlen($this->_buffer)-1);
@@ -374,7 +379,9 @@ class SimpleReadline
 	/**
 	 * Move up or down in the history.
 	 *
-	 * @param Integer specifying how many places to move up/down in the history
+	 * @param integer $n specifying how many places to move up/down in the history
+	 *
+	 * @return true on success, false on failure
 	 */
 	private function _historyMovePosition($n)
 	{
@@ -441,6 +448,10 @@ class SimpleReadline
 	/**
 	 * Checks a sequence of bytes and returns whether or not that sequence form a
 	 * valid character under the current encoding.
+	 *
+	 * @param string $sequence string of bytes to check
+	 *
+	 * @return boolean true if string is valid, false if not
 	 */
 	private static function _isValidChar($sequence)
 	{
@@ -466,7 +477,9 @@ class SimpleReadline
 	/**
 	 * Moves the cursor left.
 	 *
-	 * @param The number of characters left to move the cursor.
+	 * @param integer $n The number of characters left to move the cursor.
+	 *
+	 * @return boolean true on success or false on failure
 	 */
 	private function _cursorLeft($n=1)
 	{
@@ -486,7 +499,8 @@ class SimpleReadline
 	/**
 	 * Move cursor to the right.
 	 *
-	 * @param Number of characters to the right to move the cursor.
+	 * @param integer $n Number of characters to the right to move the cursor.
+	 *
 	 * @return boolean Whether or not the cursor was able to be moved to the right
 	 */
 	private function _cursorRight($n=1)
@@ -509,6 +523,10 @@ class SimpleReadline
 
 	/**
 	 * Calls user-defined autocomplete function to complete the current string.
+	 *
+	 * @param string $hint Line of typed text to pass to the callback function.
+	 *
+	 * @return mixed returns the partial text to complete, or false if nothing
 	 */
 	private function _doAutocomplete($hint)
 	{
@@ -689,6 +707,8 @@ class SimpleReadline
 
 	/**
 	 * Resets buffer information and position.
+	 *
+	 * @return void
 	 */
 	private function _reset()
 	{
@@ -705,7 +725,7 @@ class SimpleReadline
 	/**
 	 * Parses the given string and runs any internal commands.
 	 *
-	 * @param string $text the input string
+	 * @param string $command the input string
 	 *
 	 * @return boolean whether an internal command matched and was run
 	 */
@@ -723,8 +743,7 @@ class SimpleReadline
 			}
 
 			return true;
-		}
-		else {
+		} else {
 			return false;
 		}
 	}
@@ -732,7 +751,9 @@ class SimpleReadline
 	/**
 	 * Outputs a visual list of the autocomplete candidates.
 	 *
-	 * @param $options array an array of the candidates
+	 * @param array $options an array of the candidates
+	 *
+	 * @return void
 	 */
 	private function _showAutoCompleteOptions($options)
 	{
