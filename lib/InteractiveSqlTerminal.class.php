@@ -302,7 +302,7 @@ class InteractiveSqlTerminal
 		$matches = array();
 		foreach ($tables as $table) {
 			if (mb_strpos($table, $last_word) === 0) {
-				$matches[] = mb_substr($table, mb_strlen($last_word));
+				$matches[] = $table;
 			}
 		}
 

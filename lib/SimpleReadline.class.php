@@ -634,10 +634,9 @@ class SimpleReadline
 			return false;
 		}
 
-		$candidates = call_user_func($this->callbackAutocompleteFunction, $hint);
+		$candidates = call_user_func($this->_autocomplete_callback, $hint);
 
 		// Get available string tail matches
-		$candidates = call_user_func($this->_autocomplete_callback, $hint);
 		$last_word = mb_substr($hint, mb_strrpos($hint, ' ')+1);
 		$matches = array();
 		foreach ($candidates as $match) {
@@ -725,7 +724,7 @@ class SimpleReadline
 			printf("%-" . $optionMaxChars . "s", $options[$i]);
 		}
 		echo "\n";
-		echo $this->prompt . $this->buffer;
+		echo $this->_prompt . $this->_buffer;
 	}
 }
 ?>

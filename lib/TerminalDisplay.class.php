@@ -31,5 +31,15 @@ class TerminalDisplay
 		for ($i=0; $i<$c; $i++) echo ' ';
 		self::left($c);
 	}
-}
+
+	/**
+	 * Returns the height and width of the terminal.
+	 *
+	 * @return array An array with two elements - number of rows and number of
+	 *               columns.
+	 */
+	public function getTtySize()
+	{
+		return explode("\n", `printf "lines\ncols" | tput -S`);
+	}}
 ?>
