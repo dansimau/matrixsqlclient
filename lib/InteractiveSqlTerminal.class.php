@@ -76,11 +76,11 @@ class InteractiveSqlTerminal
 	 *
 	 * @param string $dsn connection string for database
 	 *
-	 * @return void
+	 * @return true on success or false on failure
 	 */
 	public function connect($dsn)
 	{
-		$this->_db->connect($dsn);
+		return $this->_db->connect($dsn);
 	}
 
 	/**
@@ -135,7 +135,7 @@ class InteractiveSqlTerminal
 
 			if (mb_substr(trim($line), 0, 7) == "\\timing") {
 
-				$this->_setOption("timing", !$this->_getOptionValue("timing"));
+				$this->setOption("timing", !$this->_getOptionValue("timing"));
 
 				if ($this->_getOptionValue("timing")) {
 					echo "\nTiming is on.";
@@ -169,7 +169,7 @@ class InteractiveSqlTerminal
 				} else {
 
 					$params = array_pad($params, 3, "");
-					$this->_setOption($params[1], $params[2]);
+					$this->setOption($params[1], $params[2]);
 					$this->_parseOptions();
 				}
 

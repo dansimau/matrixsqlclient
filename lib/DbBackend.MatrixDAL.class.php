@@ -1,29 +1,34 @@
 <?php
-
 /**
  * MatrixDAL (Squiz Matrix) backend for DbBackend.
  *
- * @author Daniel Simmons <dan@dans.im>
- * @copyright Copyright (C) 2010 Daniel Simmons
+ * @author    Daniel Simmons <dan@dans.im>
+ * @copyright 2010 Daniel Simmons
  */
-class DbBackend_MatrixDAL extends DbBackendPlugin {
+class DbBackend_MatrixDAL extends DbBackendPlugin
+{
+	/**
+	 * @var $_dsn DSN to connect to the database
+	 */
+	private $_dsn = '';
 
 	/**
-	 * @var $dsn DSN to connect to the database
+	 * @var $_db_type Database type: either 'oci' or 'pgsql'.
 	 */
-	private $dsn = '';
+	private $_db_type = '';
 
 	/**
-	 * @var $db_type Database type: either 'oci' or 'pgsql'.
+	 * @var $_macros Stores an array of macros (shorthand commands).
 	 */
-	private $db_type = '';
+	private $_macros = array();
 
-	private $macros = array();
-
-	public function __construct() {
-
+	/**
+	 * Constructor.
+	 */
+	public function __construct()
+	{
 		// Define macros
-		$this->macros = array(
+		$this->_macros = array(
 
 			"pgsql" => array(
 
@@ -48,12 +53,14 @@ class DbBackend_MatrixDAL extends DbBackendPlugin {
 	}
 
 	/**
-	 * Constructor
+	 * Connects to the host/database.
 	 *
-	 * @param $conn_string the MatrixDAL dbconf array from Squiz Matrix installation.
+	 * @param string $conn_string Squiz Matrix system root.
+	 *
+	 * @return boolean true on success, false on failure
 	 */
-	public function connect($conn_string) {
-
+	public function connect($conn_string)
+	{
 		$SYSTEM_ROOT = $conn_string;
 
 		if (empty($SYSTEM_ROOT) || !is_dir($SYSTEM_ROOT)) {
@@ -66,76 +73,96 @@ class DbBackend_MatrixDAL extends DbBackendPlugin {
 		require_once $SYSTEM_ROOT.'/core/lib/MatrixDAL/MatrixDAL.inc';
 		require_once $SYSTEM_ROOT.'/data/private/conf/db.inc';
 
-		$this->dsn = $db_conf['db2'];
-		$this->db_type = $db_conf['db2']['type'];
+		$this->_dsn = $db_conf['db2'];
+		$this->_db_type = $db_conf['db2']['type'];
 
 		// Attempt to connect
-		MatrixDAL::dbConnect($this->dsn, $this->db_type);
-		MatrixDAL::changeDb($this->db_type);
-	}
+		MatrixDAL::dbConnect($this->_dsn, $this->_db_type);
+		MatrixDAL::changeDb($this->_db_type);
 
-	/**
-	 * Get friendly name/identifier of the database.
-	 *
-	 * @return string name of the current database
-	 */
-	public function getDbName() {
-		return $this->dsn['DSN'];
-	}
-
-	public function getDbType() {
-		return $this->db_type;
-	}
-
-	public function getDbVersion() {
-		return '';
-	}
-
-	/**
-	 * Disconnects from the database.
-	 */
-	public function disconnect() {
+		// Matrix will throw a FATAL error if it can't connect, so if we got here
+		// we're all good
 		return true;
 	}
 
 	/**
-	 * Executes the SQL query.
+	 * Get the name of the current database.
 	 *
-	 * @param $sql the SQL query to execute
-	 * @param return array of the results
-	 */	 
-	public function execute($sql) {
+	 * @return string Name of the database.
+	 */
+	public function getDbName()
+	{
+		return $this->_dsn['DSN'];
+	}
 
-		foreach ($this->macros[$this->db_type] as $pattern => $replacement) {
+	/**
+	 * Get a description of the database/backend type.
+	 *
+	 * @return string Name of the database system.
+	 */
+	public function getDbType()
+	{
+		return $this->_db_type;
+	}
 
+	/**
+	 * Get the version of the database/backend type.
+	 *
+	 * @return string Version of the database system.
+	 */
+	public function getDbVersion()
+	{
+		return '';
+	}
+
+	/**
+	 * Disconnect from the database/host.
+	 *
+	 * @return boolean true on success, false on failure
+	 */
+	public function disconnect()
+	{
+		return true;
+	}
+
+	/**
+	 * Execute the specified SQL/commands on the database.
+	 *
+	 * @param string $sql The SQL/command to send to the database.
+	 *
+	 * @return mixed string or array of returned data, or false on failure
+	 */
+	public function execute($sql)
+	{
+
+		// Check/execute macros
+		foreach ($this->_macros[$this->_db_type] as $pattern => $replacement) {
 			$c = 0;
-
 			$sql = str_replace($pattern, $replacement, $sql, $c);
-
 			if ($c > 0) {
 				break;
 			}
 		}
 
 		// Strip semicolon from end if its Oracle
-		if ($this->db_type == 'oci') {
+		if ($this->_db_type == 'oci') {
 		    $sql = mb_substr($sql, 0, mb_strlen($sql)-1);
 		}
 
 		return MatrixDAL::executeSqlAssoc($sql);
 	}
 
-
 	/**
-	 * Gets a list of the table names for autocompletion.
+	 * Get a list of the available tables on the current database. Used for
+	 * autocomplete.
 	 *
-	 * @returns array a list of all tables in the database
+	 * @return array List of table names.
 	 */
-	public function getTableNames() {
-
+	public function getTableNames()
+	{
 		$sql = '';
 
-		switch ($this->db_type) {
+		switch ($this->_db_type) {
 
 			case 'pgsql':
 				$sql = <<<EOF
@@ -177,17 +204,18 @@ EOF;
 	}
 
 	/**
-	 * Gets a list of the column names for autocompletion.
+	 * Get a list of the available columns on the specified table. Used for
+	 * autocomplete.
 	 *
-	 * @param string $table the table to get columns for
+	 * @param string $table Name of the table
 	 *
-	 * @returns array a list of all tables in the database
+	 * @return array List of column names
 	 */
-	public function getColumnNames($table) {
-
+	public function getColumnNames($table)
+	{
 		$sql = '';
 
-		switch ($this->db_type) {
+		switch ($this->_db_type) {
 
 			case 'oci':
 				// Cheeky UNION here to allow tab completion to work for both all-upper OR
@@ -225,8 +253,16 @@ EOF;
 		return $names;
 	}
 
-	public function matchesMacro($s) {
-		return array_key_exists(trim($s), $this->macros[$this->db_type]);
+	/**
+	 * Checks whether the specified command is a supported or valid macro.
+	 *
+	 * @param string $s Command
+	 *
+	 * @return boolean true if yes or false if not
+	 */
+	public function matchesMacro($s)
+	{
+		return array_key_exists(trim($s), $this->_macros[$this->_db_type]);
 	}
 }
 ?>

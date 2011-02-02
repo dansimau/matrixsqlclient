@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # List of files to be included in the project
-FILES="lib/main.php lib/TerminalDisplay.class.php lib/InteractiveSqlTerminal.class.php lib/SimpleReadline.class.php lib/ArrayToTextTable.class.php lib/HistoryStorage.class.php lib/DbBackend.class.php lib/DbBackend.MatrixDAL.class.php"
+FILES="lib/main.php lib/TerminalDisplay.class.php lib/InteractiveSqlTerminal.class.php lib/SimpleReadline.class.php lib/ArrayToTextTable.class.php lib/HistoryStorage.class.php lib/DbBackend.class.php lib/DbBackendPlugin.class.php lib/DbBackend.MatrixDAL.class.php"
 
 # Make temp file
 TMPFILE="$(mktemp -t $(basename $0))" || exit 1
