@@ -56,6 +56,11 @@ class SimpleReadline
 	private $_autocomplete_callback = null;
 
 	/**
+	 * @var Prompt prefix
+	 */
+	private $_prompt = NULL;
+
+	/**
 	 * Resets buffer information and position.
 	 */
 	private function _reset() {
@@ -84,7 +89,9 @@ class SimpleReadline
 		$this->_reset();
 	
 		// Output prompt
+
 		if ($prompt !== null) {
+			$this->_prompt = $prompt;
 			echo "\n" . $prompt;
 		}
 		
@@ -627,8 +634,17 @@ class SimpleReadline
 			return false;
 		}
 
+		$candidates = call_user_func($this->callbackAutocompleteFunction, $hint);
+
 		// Get available string tail matches
-		$matches = call_user_func($this->_autocomplete_callback, $hint);
+		$candidates = call_user_func($this->_autocomplete_callback, $hint);
+		$last_word = mb_substr($hint, mb_strrpos($hint, ' ')+1);
+		$matches = array();
+		foreach ($candidates as $match) {
+			if (mb_strpos($match, $last_word) === 0) {
+				$matches[] = mb_substr($match, mb_strlen($last_word));
+			}
+		}
 
 		if (empty($matches)) {
 			return false;
@@ -637,11 +653,6 @@ class SimpleReadline
 		// If there's only one match, return it, along with a space on the end
 		if (count($matches) === 1) {
 			return $matches[0] . " ";
-		}
-
-		// At the moment, we only support in-line autocompletion
-		if ($matches[0] === "") {
-			return false;
 		}
 
 		// Otherwise, let's complete as many common letters as we can...
@@ -673,7 +684,48 @@ class SimpleReadline
 			}
 		}
 
+		if ($finalAutocompleteString === '') {
+			$this->showAutoCompleteOptions($candidates);
+		}
+
 		return $finalAutocompleteString;
+	}
+
+	/**
+	 * Outputs a visual list of the autocomplete candidates.
+	 *
+	 * @param $options array an array of the candidates
+	 */
+	function showAutoCompleteOptions($options) {
+
+		$optionMaxChars = 0;
+
+		// Get length of the longest match (for spacing)
+		foreach ($options as $option) {
+			if (mb_strlen($option)+2 > $optionMaxChars) {
+				$optionMaxChars = mb_strlen($option) + 2; // +2 spaces to pad with
+			}
+		}
+
+		// Get tty width
+		$ttySize = TerminalDisplay::getTtySize();
+		$ttyChars = $ttySize[1];
+
+		// Calculate number of lines required
+		$linesRequired = ceil((count($options)*$optionMaxChars) / $ttyChars);
+
+		// Calculate number of items per line
+		$itemsPerLine = floor($ttyChars / $optionMaxChars);
+
+		for ($i=0; $i < count($options)-1; $i++) {
+			if ($i % $itemsPerLine === 0) {
+				echo "\n";
+			}
+
+			printf("%-" . $optionMaxChars . "s", $options[$i]);
+		}
+		echo "\n";
+		echo $this->prompt . $this->buffer;
 	}
 }
 ?>

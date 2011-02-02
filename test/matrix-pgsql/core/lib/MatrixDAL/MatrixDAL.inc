@@ -23,19 +23,31 @@ class MatrixDAL {
 					'four'		=> "some data here $i",
 					'five'		=> "some data here $i",
 					'six'		=> "some data here $i",
-					'seven'		=> "some data here $i",
-					'eight'		=> "some data here $i",
-					'nine'		=> "some data here $i",
-					'ten'		=> "some data here $i",
-					'eleven'	=> "some data here $i",
-					'twelve'	=> "some data here $i",
+//					'seven'		=> "some data here $i",
+//					'eight'		=> "some data here $i",
+//					'nine'		=> "some data here $i",
+//					'ten'		=> "some data here $i",
+//					'eleven'	=> "some data here $i",
+//					'twelve'	=> "some data here $i",
 					);
 			}
 
 			usleep(rand(0, 1500000));
 
-			return $data;
 		}
+		elseif (strpos($a, '-- tab-completion: table-names')) {
+
+			$data = array(
+				"my_table_one",
+				"my_table_two",
+				"my_table_three",
+				"my_table_four",
+				"my_table_five",
+				"my_table_six",
+			);
+		}
+
+		return $data;
 	}
 }
 ?>

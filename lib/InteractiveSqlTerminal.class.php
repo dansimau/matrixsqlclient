@@ -295,6 +295,10 @@ class InteractiveSqlTerminal
 
 		$tables = $this->_db->getTableNames();
 
+		if (empty($tables)) {
+			return array();
+		}
+
 		$matches = array();
 		foreach ($tables as $table) {
 			if (mb_strpos($table, $last_word) === 0) {
