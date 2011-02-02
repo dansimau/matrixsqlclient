@@ -102,7 +102,7 @@ class InteractiveSqlTerminal
 		}
 		echo "), the interactive database terminal in PHP.";
 		echo "\n\nYou are now connected.";
-		echo "\nDatabase type: " . $this->_db->getDbType() . $this->_db->getDbVersion() . ".\n";
+		echo "\nDatabase type: " . $this->_db->getDbType() . $this->_db->getDbVersion() . ".\n\n";
 		ob_end_flush();
 		
 		while (1) {
@@ -200,20 +200,8 @@ class InteractiveSqlTerminal
 					continue;
 				}
 
-				// Find out what type of query this is and what to do with it
-				if (mb_strtoupper(mb_substr($sql, 0, 6)) == "UPDATE") {
-					echo "UPDATE " . count($source_data);
-				} elseif ((mb_strtoupper(mb_substr($sql, 0, 5)) == "BEGIN") ||
-						(mb_strtoupper(mb_substr($sql, 0, 5)) == "START TRANSACTION")) {
-					echo "BEGIN";
-				} elseif ((mb_strtoupper(mb_substr($sql, 0, 5)) == "ABORT") ||
-						(mb_strtoupper(mb_substr($sql, 0, 5)) == "ROLLBACK")) {
-					echo "ROLLBACK";
-				} elseif (mb_strtoupper(mb_substr($sql, 0, 6)) == "COMMIT") {
-					echo "COMMIT";
-				} else {
-
-					$this->_addToLinesBuffer(array(''));
+				// If we get an array back, it's rows
+				if (is_array($source_data)) {
 
 					// Only render the table if rows were returned
 					if (!empty($source_data)) {
@@ -232,16 +220,20 @@ class InteractiveSqlTerminal
 					}
 					$count_str .= ")";
 
-					$this->_addToLinesBuffer(array($count_str));
+					$this->_addToLinesBuffer(array($count_str, ""));
 
-					if ($this->_getOptionValue("timing")) {
-						// Output amount of time this query took
-						$this->_addToLinesBuffer(array("", "Time: " . $this->_db->getQueryExecutionTime() . " ms"));
-					}
-
-					// Output the data
-					$this->_printLines();
+				// Assuming it's a string...
+				} else {
+					$this->_addToLinesBuffer(array($source_data));
 				}
+
+				if ($this->_getOptionValue("timing")) {
+    				// Output amount of time this query took
+    				$this->_addToLinesBuffer(array("", "Time: " . $this->_db->getQueryExecutionTime() . " ms"));
+    			}
+
+    			// Output the data
+    			$this->_printLines();
 		
 				// Reset the prompt cause its a new query
 				$prompt = '=# ';

@@ -130,7 +130,7 @@ class SimpleReadline
 
 		if ($prompt !== null) {
 			$this->_prompt = $prompt;
-			echo "\n" . $prompt;
+			echo $prompt;
 		}
 		
 		while (1) {

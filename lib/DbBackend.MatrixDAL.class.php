@@ -134,6 +134,7 @@ class DbBackend_MatrixDAL extends DbBackendPlugin
 	 */
 	public function execute($sql)
 	{
+		$output = false;
 
 		// Check/execute macros
 		foreach ($this->_macros[$this->_db_type] as $pattern => $replacement) {
@@ -149,7 +150,15 @@ class DbBackend_MatrixDAL extends DbBackendPlugin
 		    $sql = mb_substr($sql, 0, mb_strlen($sql)-1);
 		}
 
-		return MatrixDAL::executeSqlAssoc($sql);
+		// Check what kind of query it is
+		if (mb_substr(mb_strtoupper($sql), 0, 6) === "SELECT") {
+			$output = MatrixDAL::executeSqlAssoc($sql);
+		} else {
+			$rows_affected = MatrixDAL::executeSql($sql);
+			$output = mb_strtoupper(mb_substr($sql, 0, 6)) . " " . $rows_affected;
+		}
+
+		return $output;
 	}
 
 	/**

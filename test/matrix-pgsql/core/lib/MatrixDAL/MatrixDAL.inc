@@ -7,6 +7,9 @@ class MatrixDAL {
 		return true;
 	}
 	public static function executeSqlAssoc($a) {
+		return self::executeSql($a);
+	}
+	public static function executeSql($a) {
 
 		$data = array();
 
@@ -34,8 +37,12 @@ class MatrixDAL {
 
 			usleep(rand(0, 1500000));
 
-		}
-		elseif (strpos($a, '-- phpsqlc: tab-completion: table-names')) {
+		} elseif ((strtoupper(substr($a, 0, 6)) === "UPDATE") || (strtoupper(substr($a, 0, 6)) === "INSERT")) {
+
+			$data = rand(1, 10);
+			usleep(rand(0, 1000000));
+
+		} elseif (strpos($a, '-- phpsqlc: tab-completion: table-names')) {
 
 			$data = array(
 				"my_table_one",
@@ -45,8 +52,7 @@ class MatrixDAL {
 				"my_table_five",
 				"my_table_six",
 			);
-		}
-		elseif (strpos($a, '-- phpsqlc: tab-completion: column-names')) {
+		} elseif (strpos($a, '-- phpsqlc: tab-completion: column-names')) {
 
 			$data = array(
 				"assetid",
