@@ -51,6 +51,11 @@ class SimpleReadline {
 	private $callbackAutocompleteFunction = NULL;
 
 	/**
+	 * @var Prompt prefix
+	 */
+	private $prompt = NULL;
+
+	/**
 	 * Resets buffer information and position.
 	 */
 	private function reset() {
@@ -80,6 +85,7 @@ class SimpleReadline {
 	
 		// Output prompt
 		if ($prompt !== NULL) {
+			$this->prompt = $prompt;
 			echo "\n" . $prompt;
 		}
 		
@@ -616,8 +622,16 @@ class SimpleReadline {
 			return FALSE;
 		}
 
+		$candidates = call_user_func($this->callbackAutocompleteFunction, $hint);
+
 		// Get available string tail matches
-		$matches = call_user_func($this->callbackAutocompleteFunction, $hint);
+		$last_word = mb_substr($hint, mb_strrpos($hint, ' ')+1);
+		$matches = array();
+		foreach ($candidates as $match) {
+			if (mb_strpos($match, $last_word) === 0) {
+				$matches[] = mb_substr($match, mb_strlen($last_word));
+			}
+		}
 
 		if (empty($matches)) {
 			return FALSE;
@@ -630,7 +644,7 @@ class SimpleReadline {
 
 		// At the moment, we only support in-line autocompletion
 		if ($matches[0] === "") {
-			return FALSE;
+//			return FALSE;
 		}
 
 		// Otherwise, let's complete as many common letters as we can...
@@ -662,7 +676,48 @@ class SimpleReadline {
 			}
 		}
 
+		if ($finalAutocompleteString === '') {
+			$this->showAutoCompleteOptions($candidates);
+		}
+
 		return $finalAutocompleteString;
+	}
+
+	/**
+	 * Outputs a visual list of the autocomplete candidates.
+	 *
+	 * @param $options array an array of the candidates
+	 */
+	function showAutoCompleteOptions($options) {
+
+		$optionMaxChars = 0;
+
+		// Get length of the longest match (for spacing)
+		foreach ($options as $option) {
+			if (mb_strlen($option) > $optionMaxChars) {
+				$optionMaxChars = mb_strlen($option) + 4; // +X number of spaces to pad with
+			}
+		}
+
+		// Get tty width
+		$ttySize = TerminalDisplay::getTtySize();
+		$ttyChars = $ttySize[1];
+
+		// Calculate number of lines required
+		$linesRequired = ceil((count($options)*$optionMaxChars) / $ttyChars);
+
+		// Calculate number of items per line
+		$itemsPerLine = floor($ttyChars / $optionMaxChars);
+
+		for ($i=0; $i < count($options)-1; $i++) {
+			if ($i % $itemsPerLine === 0) {
+				echo "\n";
+			}
+
+			printf("%-" . $optionMaxChars . "s", $options[$i]);
+		}
+		echo "\n";
+		echo $this->prompt . $this->buffer;
 	}
 }
 
@@ -676,6 +731,15 @@ class TerminalDisplay {
 		self::left($count);
 		for ($i=0; $i<$count; $i++) echo ' ';
 		self::left($count);
+	}
+
+	/**
+	 * Returns the height and width of the terminal.
+	 *
+	 * @return array An array with two elements - number of rows and number of columns.
+	 */
+	public static function getTtySize() {
+		return explode("\n", `printf "lines\ncols" | tput -S`);
 	}
 }
 
