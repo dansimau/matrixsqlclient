@@ -6,7 +6,7 @@
  * @copyright 2010 Daniel Simmons
  */
 
-class TerminalDisplay
+class Terminal
 {
 	/**
 	 * Moves the cursor left.
@@ -41,5 +41,17 @@ class TerminalDisplay
 	public function getTtySize()
 	{
 		return explode("\n", `printf "lines\ncols" | tput -S`);
-	}}
+	}
+
+	/**
+	 * Ouputs a bell character.
+	 *
+	 * @return void
+	 */
+	public static function bell()
+	{
+		echo chr(7);
+	}
+
+}
 ?>

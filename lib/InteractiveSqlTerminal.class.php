@@ -8,34 +8,35 @@
 class InteractiveSqlTerminal
 {
 	/**
-	 * @var $db DbBackend object for the backend/database
+	 * @var $_db DbBackend object for the backend/database
 	 */
 	private $_db;
 
 	/**
-	 * @var $tty_saved Stores stty string of saved terminal settings
+	 * @var $_historyFile Path to the file where command history will be saved
+	 */
+	private $_historyFile = '';
+
+	/**
+	 * @var $_tty_saved Stores stty string of saved terminal settings
 	 */
 	private $_tty_saved = '';
 
 	/**
-	 * @var $history_stage HistoryStorage class that saves command history to a file
-	 */
-	private $_history_storage;
-	
-	/**
-	 * @var $shell SimpleReadline object
+	 * @var $_shell SimpleReadline object
 	 */
 	private $_shell;
 
 	/**
-	 * @var $line_buffer line output buffer
+	 * @var $_output_buffer line output buffer
 	 */
-	private $_line_buffer = array();
+	private $_output_buffer = array();
 
 	/**
-	 * @var $options An array with a list of options and values
+	 * @var $_options An array with a list of options and values
 	 */
 	private $_options = array(
+		'HISTFILE' => '~/.phpsqlc_history',
 		'HISTSIZE' => 500,
 		'timing' => "off",
 		'disable-completion' => "off"
@@ -57,18 +58,6 @@ class InteractiveSqlTerminal
 		// Instantiate/initialise stuff
 		$this->_shell = new SimpleReadline();
 
-		// History storage
-		if (!isset($_ENV['HOME'])) {
-			$history_storage_file = '/tmp';
-		} else {
-			$history_storage_file = $_ENV['HOME'];
-		}
-		$this->_history_storage = new HistoryStorage($history_storage_file . '/.matrixsqlclient_history', true);
-
-		foreach ($this->_history_storage->getData() as $item) {
-			$this->_shell->addHistoryItem($item);
-		}
-
 		// Parse options; set autocomplete on/off, etc.
 		$this->_parseOptions();
 	}
@@ -78,6 +67,7 @@ class InteractiveSqlTerminal
 	 */
 	public function __destruct()
 	{
+		$this->_shell->writeHistory($this->_historyFile);
 		$this->restoreTerminal();
 	}
 
@@ -100,6 +90,8 @@ class InteractiveSqlTerminal
 	 */
 	public function run()
 	{
+		$this->_shell->readHistory($this->_historyFile);
+
 		$prompt = '=# ';
 		$sql = '';
 
@@ -138,7 +130,7 @@ class InteractiveSqlTerminal
 
 			if (mb_strlen($line) > 0) {
 				// Add this command to the history
-				$this->_shell->readline_add_history(strtr($line, "\n", " "));
+				$this->_shell->addHistory(strtr($line, "\n", " "));
 			}
 
 			if (mb_substr(trim($line), 0, 7) == "\\timing") {
@@ -260,9 +252,6 @@ class InteractiveSqlTerminal
 				// (like psql does)
 				$prompt = '-# ';
 			}
-
-			// Update persistent history store
-			$this->_history_storage->setData($this->_shell->history);
 		}
 	}
 	
@@ -283,7 +272,7 @@ class InteractiveSqlTerminal
 	 *
 	 * @return string Autocomplete matches
 	 */
-	public function autoCompleteText($hint)
+	public function autoComplete($hint)
 	{
 		$last_word = ltrim(mb_substr($hint, mb_strrpos($hint, ' ')));
 
@@ -355,9 +344,9 @@ class InteractiveSqlTerminal
 		if ($n > 0) {
 
 			// Print a specific number of lines
-			$line_buffer_len = count($this->_line_buffer);
+			$line_buffer_len = count($this->_output_buffer);
 			for ($i=0; $i<$line_buffer_len && $i<$n; $i++) {
-				$line = array_shift($this->_line_buffer);
+				$line = array_shift($this->_output_buffer);
 				echo $line;
 				$lines_printed[] = $line;
 			}
@@ -370,10 +359,10 @@ class InteractiveSqlTerminal
 			// Get current terminal size
 			$tty_size = $this->_getTtySize();
 
-			if (count($this->_line_buffer) < $tty_size[0]) {
+			if (count($this->_output_buffer) < $tty_size[0]) {
 
 				// Print all lines, if it fits on the tty
-				$this->_printLines(count($this->_line_buffer));
+				$this->_printLines(count($this->_output_buffer));
 
 			} else {
 
@@ -390,9 +379,9 @@ class InteractiveSqlTerminal
 				while (1) {
 
 					// Stop printing chunks if the line buffer is empty
-					if (!count($this->_line_buffer) > 0) {
+					if (!count($this->_output_buffer) > 0) {
 						// Backspace the "--More--"
-						TerminalDisplay::backspace(8);
+						Terminal::backspace(8);
 						break;
 					}
 
@@ -403,15 +392,15 @@ class InteractiveSqlTerminal
 
 						// 'G' -- print rest of all the output
 						case chr(71):
-							TerminalDisplay::backspace(8);
-							$this->_printLines(count($this->_line_buffer));
+							Terminal::backspace(8);
+							$this->_printLines(count($this->_output_buffer));
 							break;
 
 						// User wants more lines, one at a time
 						case chr(10):
 
 							// Backspace the "--More--"
-							TerminalDisplay::backspace(8);
+							Terminal::backspace(8);
 
 							$last_lines = $this->_printLines(1);
 							if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") {
@@ -426,7 +415,7 @@ class InteractiveSqlTerminal
 						case chr(122):
 
 							// Backspace the "--More--"
-							TerminalDisplay::backspace(8);
+							Terminal::backspace(8);
 
 							$last_lines = $this->_printLines($tty_size[0]-1);
 							if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") {
@@ -441,7 +430,7 @@ class InteractiveSqlTerminal
 						case chr(113):
 
 							// Backspace the "--More--"
-							TerminalDisplay::backspace(8);
+							Terminal::backspace(8);
 
 							// Clear line buffer
 							$this->_clearLineBuffer();
@@ -450,7 +439,7 @@ class InteractiveSqlTerminal
 							break;
 
 						default:
-							SimpleReadline::bell();
+							Terminal::bell();
 							continue;
 					}
 				}
@@ -478,7 +467,7 @@ class InteractiveSqlTerminal
 
 			// Split line at terminal width and add to output
 			foreach (str_split($data[$i], (int)$tty_size[1]) as $line) {
-				$this->_line_buffer[] = $line;
+				$this->_output_buffer[] = $line;
 			}
 		}
 	}
@@ -490,7 +479,7 @@ class InteractiveSqlTerminal
 	 */
 	private function _clearLineBuffer()
 	{
-		$this->_line_buffer = array();
+		$this->_output_buffer = array();
 	}
 
 	/**
@@ -501,9 +490,10 @@ class InteractiveSqlTerminal
 	 *
 	 * @return void
 	 */
-	private function _setOption($option, $value)
+	public function setOption($option, $value)
 	{
 		$this->_options[$option] = $value;
+		$this->_parseOptions();
 	}
 
 	/**
@@ -525,7 +515,6 @@ class InteractiveSqlTerminal
 	 */
 	private function _getOptionValue($option)
 	{
-
 		$value = false;
 
 		if (isset($this->_options[$option])) {
@@ -534,17 +523,17 @@ class InteractiveSqlTerminal
 
 			switch ($value) {
 
+				case "true":
 				case "yes":
 				case "on":
 				case "1":
-				case 1:
 					$value = true;
 					break;
 
+				case "false":
 				case "off":
 				case "no":
 				case "0":
-				case 0:
 					$value = false;
 					break;
 			}
@@ -572,16 +561,26 @@ class InteractiveSqlTerminal
 	 */
 	private function _parseOptions()
 	{
-
 		// Register autocomplete function
 		if (!$this->_getOptionValue("disable-completion")) {
-			$this->_shell->registerAutocompleteFunc(array($this, "autoCompleteText"));
+			$this->_shell->registerAutocompleteCallback(array($this, "autoComplete"));
 		} else {
-			$this->_shell->registerAutocompleteFunc(null);
+			$this->_shell->registerAutocompleteCallback(null);
 		}
 
 		// Set maximum history size
-		$this->_history_storage->setMaxSize($this->_getOptionValue("HISTSIZE"));
+		$this->_shell->setHistorySize($this->_getOptionValue("HISTSIZE"));
+
+		// Expand out tilde (~) in history filename
+		if (strpos($this->_getOptionValue("HISTFILE"), "~") !== false) {
+			if (isset($_ENV['HOME'])) {
+				$this->_historyFile = str_replace("~", $_ENV['HOME'], $this->_getOptionValue("HISTFILE"));
+			} else {
+				$this->_historyFile = str_replace("~", "/tmp", $this->_getOptionValue("HISTFILE"));
+			}
+		} else {
+			$this->_historyFile = $this->_getOptionValue("HISTFILE");
+		}
 	}
 }
 ?>

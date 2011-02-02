@@ -34,11 +34,10 @@ class HistoryStorage
 	 * @param string  $file     path and filename where history should be saved
 	 * @param boolean $autosave whether to save history items to file on destruct
 	 */
-	function __construct($file, $autosave=false)
+	function __construct($file='', $autosave=true)
 	{
 		$this->_file = $file;
 		$this->_autosave = $autosave;
-		$this->load();
 	}
 
 	/**
@@ -60,11 +59,11 @@ class HistoryStorage
 	{
 		$data = @file($this->_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
-		if ($data === false) {
-			return false;
-		} else {
+		if (is_array($data) === true) {
 			$this->_data = $data;
-			return $this->_data;
+			return true;
+		} else {
+			return false;
 		}
 	}
 
@@ -104,6 +103,7 @@ class HistoryStorage
 	{
 		if (is_array($data)) {
 			$this->_data = $data;
+			return true;
 		} else {
 			return false;
 		}
