@@ -35,7 +35,7 @@ class MatrixDAL {
 			usleep(rand(0, 1500000));
 
 		}
-		elseif (strpos($a, '-- tab-completion: table-names')) {
+		elseif (strpos($a, '-- phpsqlc: tab-completion: table-names')) {
 
 			$data = array(
 				"my_table_one",
@@ -44,6 +44,28 @@ class MatrixDAL {
 				"my_table_four",
 				"my_table_five",
 				"my_table_six",
+			);
+		}
+		elseif (strpos($a, '-- phpsqlc: tab-completion: column-names')) {
+
+			$data = array(
+				"assetid",
+				"type_code",
+				"version",
+				"name",
+				"short_name",
+				"status",
+				"languages",
+				"charset",
+				"force_secure",
+				"created",
+				"created_userid",
+				"updated",
+				"updated_userid",
+				"published",
+				"published_userid",
+				"status_changed",
+				"status_changed_userid",
 			);
 		}
 

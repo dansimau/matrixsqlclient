@@ -139,7 +139,7 @@ class DbBackend_MatrixDAL extends DbBackendPlugin {
 
 			case 'pgsql':
 				$sql = <<<EOF
-					-- tab-completion: table-names
+					-- phpsqlc: tab-completion: table-names
 					SELECT
 					  c.relname as "Name"
 					FROM pg_catalog.pg_class c
@@ -171,6 +171,55 @@ EOF;
 			catch (Exception $e) {
 				$names = array();
 			}
+		}
+
+		return $names;
+	}
+
+	/**
+	 * Gets a list of the column names for autocompletion.
+	 *
+	 * @param string $table the table to get columns for
+	 *
+	 * @returns array a list of all tables in the database
+	 */
+	public function getColumnNames($table) {
+
+		$sql = '';
+
+		switch ($this->db_type) {
+
+			case 'oci':
+				// Cheeky UNION here to allow tab completion to work for both all-upper OR
+				// all-lowercase table names (only for MatrixDAL/oci, so users can be lazy)
+				$sql = "SELECT column_name FROM all_tab_columns WHERE table_name = " . mb_strtoupper(MatrixDAL::quote($table)) . " UNION " .
+				       "SELECT LOWER(column_name) FROM all_tab_columns WHERE table_name = " . mb_strtoupper(MatrixDAL::quote($table));
+				break;
+
+			case 'pgsql':
+				$sql = <<<EOF
+					-- phpsqlc: tab-completion: column-names
+					SELECT a.attname FROM pg_catalog.pg_attribute a
+					WHERE a.attrelid IN (
+					    SELECT c.oid
+					    FROM pg_catalog.pg_class c
+					         LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+					    WHERE c.relname = '$table' AND pg_catalog.pg_table_is_visible(c.oid)
+					) AND a.attnum > 0 AND NOT a.attisdropped;
+EOF;
+
+		}
+
+		// We only know queries for pgsql and oci
+		if ($sql === '') {
+			return array();
+		}
+
+		try {
+		    $names = MatrixDAL::executeSqlAssoc($sql, 0);
+		}
+		catch (Exception $e) {
+		    $names = array();
 		}
 
 		return $names;

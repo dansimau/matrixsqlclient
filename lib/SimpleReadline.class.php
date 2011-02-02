@@ -61,6 +61,11 @@ class SimpleReadline
 	private $_prompt = null;
 
 	/**
+	 * @var number of times TAB has been pressed since last autocomplete
+	 */
+	private $_autocompleteTabPressCount = 0;
+
+	/**
 	 * Resets buffer information and position.
 	 */
 	private function _reset() {
@@ -636,8 +641,22 @@ class SimpleReadline
 
 		$candidates = call_user_func($this->_autocomplete_callback, $hint);
 
-		// Get available string tail matches
+		if (empty($candidates)) {
+			return false;
+		}
+
 		$last_word = mb_substr($hint, mb_strrpos($hint, ' ')+1);
+
+		/* If the last word is nothing '', then it means the user hasn't started off
+		   the autocomplete (given a hint) at all. We don't do inline autocomplete in
+		   this case. */
+		if ($last_word === '') {
+			$this->showAutoCompleteOptions($candidates);
+			return false;
+		}
+
+		/* Otherwise, the user has started typing a word, and we want to autocomplete
+		   it in-line as much as possible before showing possible options. */
 		$matches = array();
 		foreach ($candidates as $match) {
 			if (mb_strpos($match, $last_word) === 0) {
@@ -696,6 +715,14 @@ class SimpleReadline
 	 * @param $options array an array of the candidates
 	 */
 	function showAutoCompleteOptions($options) {
+
+		// TAB must be pressed twice to show autocomplete options
+		if (!$this->_autocompleteTabPressCount > 0) {
+			$this->_autocompleteTabPressCount++;
+			return;
+		} else {
+			$this->_autocompleteTabPressCount = 0;
+		}
 
 		$optionMaxChars = 0;
 

@@ -285,24 +285,34 @@ class InteractiveSqlTerminal
 	 */
 	public function autoCompleteText($hint)
 	{
+		$last_word = ltrim(mb_substr($hint, mb_strrpos($hint, ' ')));
 
-		$last_word = mb_substr($hint, mb_strrpos($hint, ' ')+1);
+		// Autocomplete table names after a FROM
+		if (preg_match('/SELECT\s+.+\s+FROM\s+\w*$/i', $hint)) {
+			$candidates = $this->_db->getTableNames();
 
-		// $hint ends in a space - so no completion to be done
-		if (empty($last_word)) {
+		// Autocomplete column names after a WHERE
+		} elseif (preg_match('/SELECT\s+.+\s+FROM\s+(.+?)\s+WHERE\s+\w*$/i', $hint, $table_name_search)) {
+			$table_name = @$table_name_search[1];
+			$candidates = $this->_db->getColumnNames($table_name);
+		}
+
+		// Nothing to autocomplete
+		if (empty($candidates)) {
 			return array();
 		}
 
-		$tables = $this->_db->getTableNames();
-
-		if (empty($tables)) {
-			return array();
+		// Autocomplete has options, but user hasn't begun typing yet
+		if ($last_word === "") {
+		    return $candidates;
 		}
 
+		// Autocomplete has options, lets narrow it down based on what the user has
+		// typed already.
 		$matches = array();
-		foreach ($tables as $table) {
-			if (mb_strpos($table, $last_word) === 0) {
-				$matches[] = $table;
+		foreach ($candidates as $candidate) {
+			if (mb_strpos($candidate, $last_word) === 0) {
+				$matches[] = $candidate;
 			}
 		}
 

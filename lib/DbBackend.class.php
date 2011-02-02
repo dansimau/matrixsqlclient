@@ -100,6 +100,10 @@ class DbBackend {
 		return $this->_backend->getTableNames();
 	}
 
+	public function getColumnNames($table) {
+		return $this->_backend->getColumnNames($table);
+	}
+
 	/**
 	 * Checks to see if the current line matches an internal command.
 	 */
