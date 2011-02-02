@@ -281,13 +281,14 @@ class SimpleReadline
 	private function processInternalCommand($command)
 	{
 		// history command
-		if (mb_substr($command, 0, 2) === "\h") {
+		if (mb_substr($command, 0, 5) === "\hist") {
 
 			echo "\n\n";
 
 			// Print history
 			for ($i=0; $i<count($this->history); $i++) {
-				echo $i+1 . ". " . $this->history[$i] . "\n";
+				$p = strlen((string)count($this->history)) + 1;
+				printf("%" . $p . "s  %s\n", $i+1, $this->history[$i]);
 			}
 
 			return true;
