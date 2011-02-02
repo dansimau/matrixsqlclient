@@ -58,7 +58,7 @@ class SimpleReadline
 	/**
 	 * @var Prompt prefix
 	 */
-	private $_prompt = NULL;
+	private $_prompt = null;
 
 	/**
 	 * Resets buffer information and position.
@@ -716,7 +716,7 @@ class SimpleReadline
 		// Calculate number of items per line
 		$itemsPerLine = floor($ttyChars / $optionMaxChars);
 
-		for ($i=0; $i < count($options)-1; $i++) {
+		for ($i=0; $i < count($options); $i++) {
 			if ($i % $itemsPerLine === 0) {
 				echo "\n";
 			}
