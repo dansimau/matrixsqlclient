@@ -41,11 +41,6 @@ class SimpleReadline
 	private $_buffer = '';
 	
 	/**
-	 * @var Whether debug information is printed to the terminal.
-	 */
-	private $_debug = false;
-
-	/**
 	 * @var Stores current cursor position
 	 */
 	private $_buffer_position = 0;
@@ -103,12 +98,6 @@ class SimpleReadline
 		while (1) {
 		
 			$c = self::readKey();
-		
-			if ($this->_debug) {
-				echo "\ndebug: keypress:";
-				for ($i=0; $i<mb_strlen($c); $i++) echo " " . ord($c[$i]);
-				echo "\n";
-			}
 		
 			switch ($c) {
 
@@ -244,15 +233,6 @@ class SimpleReadline
 					$this->insertIntoBuffer($c);
 			}
 
-			if ($this->_debug) {
-				echo "\ndebug: buffer length  : " . mb_strlen($this->_buffer) . "\n";
-				echo "debug: buffer contents: " . $this->_buffer . "\n";
-				echo "debug: buffer position: " . $this->_buffer_position . "\n";
-				
-				echo "\ndebug: history: position: " . $this->_history_position . "\n";
-				echo "debug: history: item: " . $this->_history_tmp[$this->_history_position] . "\n";
-			}
-
 			// If line has been set, we're ready to do something with this command
 			if ($line !== null) {
 			
@@ -300,24 +280,8 @@ class SimpleReadline
 
 	private function processInternalCommand($command)
 	{
-		// debug command
-		if (mb_substr($command, 0, 6) === "\debug") {
-
-			if ($this->_debug) {
-				echo "\ndebug mode off.\n";
-				$this->_debug = false;
-
-			} else {
-
-				echo "\ndebug mode on.\n";
-				$this->_debug = true;
-			}
-			
-			return true;
-		}
-		
 		// history command
-		elseif (mb_substr($command, 0, 2) === "\h") {
+		if (mb_substr($command, 0, 2) === "\h") {
 
 			echo "\n\n";
 
