@@ -3,11 +3,12 @@
 if (function_exists("pcntl_signal")) {
 	declare(ticks = 1);
 
-	function sig_handler($signal) {
+	function sig_handler($signal)
+	{
 		global $matrixSqlTerminal;
 		switch ($signal) {
-			// Reset the terminal again when the process is unfrozen
 			case SIGCONT:
+				// Reset the terminal again when the process is unfrozen
 				$matrixSqlTerminal->resetTerminal();
 				break;
 		}
@@ -16,7 +17,6 @@ if (function_exists("pcntl_signal")) {
 }
 
 error_reporting(E_ALL);
-
 mb_internal_encoding("UTF-8");
 
 // Run the terminal

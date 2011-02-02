@@ -2,44 +2,40 @@
 /**
  * SQL client - the main class.
  *
- * Classes this relies on:
- *  - SimpleReadline
- *  - HistoryStorage
- *
- * @author Daniel Simmons <dan@dans.im>
- * @copyright Copyright (C) 2010 Daniel Simmons
+ * @author    Daniel Simmons <dan@dans.im>
+ * @copyright 2010 Daniel Simmons
  */
-class InteractiveSqlTerminal {
-
+class InteractiveSqlTerminal
+{
 	/**
 	 * @var $db DbBackend object for the backend/database
 	 */
-	private $db;
+	private $_db;
 
 	/**
 	 * @var $tty_saved Stores stty string of saved terminal settings
 	 */
-	private $tty_saved = '';
+	private $_tty_saved = '';
 
 	/**
 	 * @var $history_stage HistoryStorage class that saves command history to a file
 	 */
-	private $history_storage;
+	private $_history_storage;
 	
 	/**
 	 * @var $shell SimpleReadline object
 	 */
-	private $shell;
+	private $_shell;
 
 	/**
 	 * @var $line_buffer line output buffer
 	 */
-	private $line_buffer = array();
+	private $_line_buffer = array();
 
 	/**
 	 * @var $options An array with a list of options and values
 	 */
-	private $options = array(
+	private $_options = array(
 		'HISTSIZE' => 500,
 		'timing' => "off",
 		'disable-completion' => "off"
@@ -48,17 +44,18 @@ class InteractiveSqlTerminal {
 	/**
 	 * Constructor - initialises Matrix DAL and attempts to connect to database
 	 *
-	 * @param $backend name of backend plugin to use to connect
+	 * @param string $backend name of backend plugin to use to connect
 	 */
-	public function __construct($backend) {
+	public function __construct($backend)
+	{
 
-		$this->resetTerminal(true);
+		$this->_resetTerminal(true);
 
 		// Instantiate database backend plugin
-		$this->db = new DbBackend($backend);
+		$this->_db = new DbBackend($backend);
 
 		// Instantiate/initialise stuff
-		$this->shell = new SimpleReadline();
+		$this->_shell = new SimpleReadline();
 
 		// History storage
 		if (!isset($_ENV['HOME'])) {
@@ -66,49 +63,60 @@ class InteractiveSqlTerminal {
 		} else {
 			$history_storage_file = $_ENV['HOME'];
 		}
-		$this->history_storage = new HistoryStorage($history_storage_file . '/.matrixsqlclient_history', true);
-		$this->shell->history = $this->history_storage->getData();
+		$this->_history_storage = new HistoryStorage($history_storage_file . '/.matrixsqlclient_history', true);
+
+		foreach ($this->_history_storage->getData() as $item) {
+			$this->_shell->addHistoryItem($item);
+		}
 
 		// Parse options; set autocomplete on/off, etc.
-		$this->parseOptions();
+		$this->_parseOptions();
 	}
 	
 	/**
 	 * Destructor function - should restore terminal settings
 	 */
-	public function __destruct() {
+	public function __destruct()
+	{
 		$this->restoreTerminal();
 	}
 
 	/**
 	 * Connects the db backend
 	 *
-	 * @param $dsn connection string for database
+	 * @param string $dsn connection string for database
+	 *
+	 * @return void
 	 */
-	public function connect($dsn) {
-		$this->db->connect($dsn);
+	public function connect($dsn)
+	{
+		$this->_db->connect($dsn);
 	}
 
 	/**
 	 * Starts the main interactive terminal
+	 *
+	 * @return void
 	 */
-	public function run() {
-
+	public function run()
+	{
 		$prompt = '=# ';
 		$sql = '';
 
 		ob_start();
 		echo "Welcome to matrixsqlclient (alpha";
-		if (!empty($GLOBALS['rev'])) echo ", rev " . $GLOBALS['rev'];
+		if (!empty($GLOBALS['rev'])) {
+			echo ", rev " . $GLOBALS['rev'];
+		}
 		echo "), the interactive database terminal in PHP.";
 		echo "\n\nYou are now connected.";
-		echo "\nDatabase type: " . $this->db->getDbType() . $this->db->getDbVersion() . ".\n";
+		echo "\nDatabase type: " . $this->_db->getDbType() . $this->_db->getDbVersion() . ".\n";
 		ob_end_flush();
 		
 		while (1) {
 		
 			// Prompt for input
-			$line = $this->shell->readline($this->db->getDbName() . $prompt);
+			$line = $this->_shell->readline($this->_db->getDbName() . $prompt);
 
 			// Exits
 			if ((mb_substr(trim($line), 0, 4) == 'exit') || (mb_substr(trim($line), 0, 4) == 'quit') || (mb_substr(trim($line), 0, 2) == '\q')) {
@@ -130,14 +138,14 @@ class InteractiveSqlTerminal {
 
 			if (mb_strlen($line) > 0) {
 				// Add this command to the history
-				$this->shell->readline_add_history(strtr($line, "\n", " "));
+				$this->_shell->readline_add_history(strtr($line, "\n", " "));
 			}
 
 			if (mb_substr(trim($line), 0, 7) == "\\timing") {
 
-				$this->setOption("timing", !$this->getOptionValue("timing"));
+				$this->_setOption("timing", !$this->_getOptionValue("timing"));
 
-				if ($this->getOptionValue("timing")) {
+				if ($this->_getOptionValue("timing")) {
 					echo "\nTiming is on.";
 				} else {
 					echo "\nTiming is off.";
@@ -154,13 +162,13 @@ class InteractiveSqlTerminal {
 				// "\set" with no options - show existing options/values
 				if (count($params) === 1) {
 
-					$options = $this->getOptions();
+					$options = $this->_getOptions();
 
 					if (count($options) > 0) {
 
-						foreach ($this->getOptions() as $option => $value) {
-							$value = ($value === TRUE) ? "on" : $value;
-							$value = ($value === FALSE) ? "off" : $value;
+						foreach ($this->_getOptions() as $option => $value) {
+							$value = ($value === true) ? "on" : $value;
+							$value = ($value === false) ? "off" : $value;
 							echo "\n" . $option . " = '" . $value . "'";
 						}
 					}
@@ -169,8 +177,8 @@ class InteractiveSqlTerminal {
 				} else {
 
 					$params = array_pad($params, 3, "");
-					$this->setOption($params[1], $params[2]);
-					$this->parseOptions();
+					$this->_setOption($params[1], $params[2]);
+					$this->_parseOptions();
 				}
 
 				continue;
@@ -180,7 +188,7 @@ class InteractiveSqlTerminal {
 
 			// If the SQL string is terminated with a semicolon, or the DB module wants
 			// to accept it (eg. for a macro), then execute it
-			if ($this->db->matchesMacro($sql) || mb_strpos($sql, ';')) {
+			if ($this->_db->matchesMacro($sql) || mb_strpos($sql, ';')) {
 
 				echo "\n";
 
@@ -188,7 +196,7 @@ class InteractiveSqlTerminal {
 
 				try {
 					// Run the SQL
-					$source_data = $this->db->execute($sql);
+					$source_data = $this->_db->execute($sql);
 				}
 				catch (Exception $e) {
 					echo "\n" . $e->getMessage() . "\n";
@@ -203,22 +211,17 @@ class InteractiveSqlTerminal {
 				// Find out what type of query this is and what to do with it
 				if (mb_strtoupper(mb_substr($sql, 0, 6)) == "UPDATE") {
 					echo "UPDATE " . count($source_data);
-				}
-				elseif ((mb_strtoupper(mb_substr($sql, 0, 5)) == "BEGIN") ||
+				} elseif ((mb_strtoupper(mb_substr($sql, 0, 5)) == "BEGIN") ||
 						(mb_strtoupper(mb_substr($sql, 0, 5)) == "START TRANSACTION")) {
 					echo "BEGIN";
-				}
-				elseif ((mb_strtoupper(mb_substr($sql, 0, 5)) == "ABORT") ||
+				} elseif ((mb_strtoupper(mb_substr($sql, 0, 5)) == "ABORT") ||
 						(mb_strtoupper(mb_substr($sql, 0, 5)) == "ROLLBACK")) {
 					echo "ROLLBACK";
-				}
-				elseif (mb_strtoupper(mb_substr($sql, 0, 6)) == "COMMIT") {
+				} elseif (mb_strtoupper(mb_substr($sql, 0, 6)) == "COMMIT") {
 					echo "COMMIT";
-				}
-				// SELECTs and default
-				else {
+				} else {
 
-					$this->addToLinesBuffer(array(''));
+					$this->_addToLinesBuffer(array(''));
 
 					// Only render the table if rows were returned
 					if (!empty($source_data)) {
@@ -227,23 +230,25 @@ class InteractiveSqlTerminal {
 						$table = new ArrayToTextTable($source_data);
 						$table->showHeaders(true);
 
-						$this->addToLinesBuffer(explode("\n", $table->render(true)));
+						$this->_addToLinesBuffer(explode("\n", $table->render(true)));
 					}
 
 					// Build count summary (at end of table) and add to line buffer
 					$count_str = "(" . count($source_data) . " row";
-					if (count($source_data) !== 1) $count_str .= "s";
+					if (count($source_data) !== 1) {
+						$count_str .= "s";
+					}
 					$count_str .= ")";
 
-					$this->addToLinesBuffer(array($count_str));
+					$this->_addToLinesBuffer(array($count_str));
 
-					if ($this->getOptionValue("timing")) {
+					if ($this->_getOptionValue("timing")) {
 						// Output amount of time this query took
-						$this->addToLinesBuffer(array("", "Time: " . $this->db->getQueryExecutionTime() . " ms"));
+						$this->_addToLinesBuffer(array("", "Time: " . $this->_db->getQueryExecutionTime() . " ms"));
 					}
 
 					// Output the data
-					$this->printLines();
+					$this->_printLines();
 				}
 		
 				// Reset the prompt cause its a new query
@@ -257,20 +262,63 @@ class InteractiveSqlTerminal {
 			}
 
 			// Update persistent history store
-			$this->history_storage->setData($this->shell->history);
+			$this->_history_storage->setData($this->_shell->history);
 		}
 	}
 	
 	/**
+	 * Restores the terminal to the previously saved state.
+	 *
+	 * @return void
+	 */
+	public function restoreTerminal()
+	{
+		system("stty '" . trim($this->_tty_saved) . "'");
+	}
+
+	/**
+	 * Provides autocompletion for the given text.
+	 *
+	 * @param string $hint Current non-completed text string
+	 *
+	 * @return string Autocomplete matches
+	 */
+	public function autoCompleteText($hint)
+	{
+
+		$last_word = mb_substr($hint, mb_strrpos($hint, ' ')+1);
+
+		// $hint ends in a space - so no completion to be done
+		if (empty($last_word)) {
+			return array();
+		}
+
+		$tables = $this->_db->getTableNames();
+
+		$matches = array();
+		foreach ($tables as $table) {
+			if (mb_strpos($table, $last_word) === 0) {
+				$matches[] = mb_substr($table, mb_strlen($last_word));
+			}
+		}
+
+		return $matches;
+	}
+
+	/**
 	 * Gets the terminal ready for our own use (switch it to raw mode).
 	 *
-	 * @param bool whether or not to save the existing terminal settings for restoring later
+	 * @param bool $save_existing whether to save the existing terminal settings for
+	 *                            restoring later.
+	 *
+	 * @return void
 	 */
-	public function resetTerminal($save_existing=FALSE) {
+	private function _resetTerminal($save_existing=false)
+	{
 
 		// Save existing settings
 		if ($save_existing) {
-			$this->tty_saved = `stty -g`;
+			$this->_tty_saved = `stty -g`;
 		}
 
 		// Reset terminal
@@ -278,36 +326,24 @@ class InteractiveSqlTerminal {
 	}
 
 	/**
-	 * Restores the terminal to the previously saved state.
-	 */
-	public function restoreTerminal() {
-		system("stty '" . trim($this->tty_saved) . "'");
-	}
-
-	/**
-	 * Returns the height and width of the terminal.
-	 *
-	 * @return array An array with two elements - number of rows and number of columns.
-	 */
-	public function getTtySize() {
-		return explode("\n", `printf "lines\ncols" | tput -S`);
-	}
-
-	/**
 	 * Prints the specified number of lines from the line buffer.
 	 *
-	 * @param $n number of lines to print, or 0 to print all lines, with pagination (default)
+	 * @param integer $n number of lines to print, or 0 to print all lines, with
+	 *                pagination (default)
+	 *
+	 * @return void
 	 */
-	public function printLines($n=0) {
+	private function _printLines($n=0)
+	{
 
 		$lines_printed = array();
 
 		if ($n > 0) {
 
 			// Print a specific number of lines
-			$line_buffer_len = count($this->line_buffer);
+			$line_buffer_len = count($this->_line_buffer);
 			for ($i=0; $i<$line_buffer_len && $i<$n; $i++) {
-				$line = array_shift($this->line_buffer);
+				$line = array_shift($this->_line_buffer);
 				echo $line;
 				$lines_printed[] = $line;
 			}
@@ -318,27 +354,29 @@ class InteractiveSqlTerminal {
 		} else {
 
 			// Get current terminal size
-			$tty_size = $this->getTtySize();
+			$tty_size = $this->_getTtySize();
 
-			if (count($this->line_buffer) < $tty_size[0]) {
+			if (count($this->_line_buffer) < $tty_size[0]) {
 
 				// Print all lines, if it fits on the tty
-				$this->printLines(count($this->line_buffer));
+				$this->_printLines(count($this->_line_buffer));
 
 			} else {
 
 				// Otherwise, let's paginate...
 
 				// Print first chunk
-				$last_lines = $this->printLines($tty_size[0]-1);
-				if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") echo "\n";
+				$last_lines = $this->_printLines($tty_size[0]-1);
+				if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") {
+					echo "\n";
+				}
 				echo "\033[30;47m" . "--More--" . "\033[0m";
 
 				// Print rest of the chunks
 				while (1) {
 
 					// Stop printing chunks if the line buffer is empty
-					if (!count($this->line_buffer) > 0) {
+					if (!count($this->_line_buffer) > 0) {
 						// Backspace the "--More--"
 						TerminalDisplay::backspace(8);
 						break;
@@ -352,7 +390,7 @@ class InteractiveSqlTerminal {
 						// 'G' -- print rest of all the output
 						case chr(71):
 							TerminalDisplay::backspace(8);
-							$this->printLines(count($this->line_buffer));
+							$this->_printLines(count($this->_line_buffer));
 							break;
 
 						// User wants more lines, one at a time
@@ -361,8 +399,10 @@ class InteractiveSqlTerminal {
 							// Backspace the "--More--"
 							TerminalDisplay::backspace(8);
 
-							$last_lines = $this->printLines(1);
-							if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") echo "\n";
+							$last_lines = $this->_printLines(1);
+							if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") {
+								echo "\n";
+							}
 							echo "\033[30;47m" . "--More--" . "\033[0m";
 
 							break;
@@ -374,8 +414,10 @@ class InteractiveSqlTerminal {
 							// Backspace the "--More--"
 							TerminalDisplay::backspace(8);
 
-							$last_lines = $this->printLines($tty_size[0]-1);
-							if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") echo "\n";
+							$last_lines = $this->_printLines($tty_size[0]-1);
+							if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") {
+								echo "\n";
+							}
 							echo "\033[30;47m" . "--More--" . "\033[0m";
 
 							break;
@@ -388,7 +430,7 @@ class InteractiveSqlTerminal {
 							TerminalDisplay::backspace(8);
 
 							// Clear line buffer
-							$this->clearLineBuffer();
+							$this->_clearLineBuffer();
 
 							return;
 							break;
@@ -405,12 +447,14 @@ class InteractiveSqlTerminal {
 	/**
 	 * Adds data to the line buffer.
 	 *
-	 * @param $data array of lines to add to the buffer
+	 * @param array $data array of lines to add to the buffer
+	 *
+	 * @return void
 	 */
-	public function addToLinesBuffer($data) {
-
+	private function _addToLinesBuffer($data)
+	{
 		// Get current terminal size
-		$tty_size = $this->getTtySize();
+		$tty_size = $this->_getTtySize();
 
 		// Loop through data so we can split lines at terminal size
 		for ($i=0; $i<count($data); $i++) {
@@ -420,72 +464,59 @@ class InteractiveSqlTerminal {
 
 			// Split line at terminal width and add to output
 			foreach (str_split($data[$i], (int)$tty_size[1]) as $line) {
-				$this->line_buffer[] = $line;
+				$this->_line_buffer[] = $line;
 			}
 		}
 	}
 
 	/**
 	 * Erases everything in the line buffer.
-	 */
-	public function clearLineBuffer() {
-		$this->line_buffer = array();
-	}
-
-	/**
-	 * Provides autocompletion for the given text.
 	 *
-	 * @param $hint string Current non-completed text string
-	 * @returns string Autocomplete matches
+	 * @return void
 	 */
-	public function autoCompleteText($hint) {
-
-		$last_word = mb_substr($hint, mb_strrpos($hint, ' ')+1);
-
-		// $hint ends in a space - so no completion to be done
-		if (empty($last_word)) {
-			return array();
-		}
-
-		$tables = $this->db->getTableNames();
-
-		$matches = array();
-		foreach ($tables as $table) {
-			if (mb_strpos($table, $last_word) === 0) {
-				$matches[] = mb_substr($table, mb_strlen($last_word));
-			}
-		}
-
-		return $matches;
+	private function _clearLineBuffer()
+	{
+		$this->_line_buffer = array();
 	}
 
 	/**
 	 * Set an sqlclient option.
+	 *
+	 * @param string $option name of the option
+	 * @param mixed  $value  of the option
+	 *
+	 * @return void
 	 */
-	public function setOption($option, $value) {
-		$this->options[$option] = $value;
+	private function _setOption($option, $value)
+	{
+		$this->_options[$option] = $value;
 	}
 
 	/**
 	 * Get all the sqlclient options.
+	 *
+	 * @return array an array of all the options and their settings
 	 */
-	public function getOptions() {
-		return $this->options;
+	private function _getOptions()
+	{
+		return $this->_options;
 	}
 
 	/**
 	 * Get an sqlclient option value.
 	 *
-	 * @param $option the name of the option to get the current value of
-	 * @returns mixed the value of the specified option
+	 * @param string $option the name of the option to get the current value of
+	 *
+	 * @return mixed the value of the specified option
 	 */
-	public function getOptionValue($option) {
+	private function _getOptionValue($option)
+	{
 
-		$value = FALSE;
+		$value = false;
 
-		if (isset($this->options[$option])) {
+		if (isset($this->_options[$option])) {
 
-			$value = trim(strtolower($this->options[$option]));
+			$value = trim(strtolower($this->_options[$option]));
 
 			switch ($value) {
 
@@ -493,14 +524,14 @@ class InteractiveSqlTerminal {
 				case "on":
 				case "1":
 				case 1:
-					$value = TRUE;
+					$value = true;
 					break;
 
 				case "off":
 				case "no":
 				case "0":
 				case 0:
-					$value = FALSE;
+					$value = false;
 					break;
 			}
 		}
@@ -509,20 +540,34 @@ class InteractiveSqlTerminal {
 	}
 
 	/**
+	 * Returns the height and width of the terminal.
+	 *
+	 * @return array An array with two elements - number of rows and number of
+	 *               columns.
+	 */
+	private function _getTtySize()
+	{
+		return explode("\n", `printf "lines\ncols" | tput -S`);
+	}
+
+	/**
 	 * Performs one-time action things that need to be done when options are
 	 * toggled on or off.
+	 *
+	 * @return void
 	 */
-	public function parseOptions() {
+	private function _parseOptions()
+	{
 
 		// Register autocomplete function
-		if (!$this->getOptionValue("disable-completion")) {
-			$this->shell->registerAutocompleteFunc(array($this, "autoCompleteText"));
+		if (!$this->_getOptionValue("disable-completion")) {
+			$this->_shell->registerAutocompleteFunc(array($this, "autoCompleteText"));
 		} else {
-			$this->shell->registerAutocompleteFunc(NULL);
+			$this->_shell->registerAutocompleteFunc(null);
 		}
 
 		// Set maximum history size
-		$this->history_storage->setMaxSize($this->getOptionValue("HISTSIZE"));
+		$this->_history_storage->setMaxSize($this->_getOptionValue("HISTSIZE"));
 	}
 }
 ?>

@@ -1,20 +1,25 @@
 <?php
+/**
+ * Alternative readline library.
+ *
+ * @author    Daniel Simmons <dan@dans.im>
+ * @copyright 2010 Daniel Simmons
+ */
+
+function sortArrayByLength($a,$b)
+{
+	return count($a)-count($b);
+}
+
 define('UP', chr(27).chr(91).chr(65));
 define('DOWN', chr(27).chr(91).chr(66));
 define('RIGHT', chr(27).chr(91).chr(67));
 define('LEFT', chr(27).chr(91).chr(68));
 
-/**
- * Alternative readline library.
- *
- * @author Daniel Simmons <dan@dans.im>
- * @copyright Copyright (C) 2010 Daniel Simmons
- */
-
 //system("stty raw opost -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef");
 
-class SimpleReadline {
-
+class SimpleReadline
+{
 	/**
 	 * @var Stores the command line history.
 	 */
@@ -23,46 +28,46 @@ class SimpleReadline {
 	/**
 	 * @var Stores a working copy the command line history.
 	 */
-	private $history_tmp = array();
+	private $_history_tmp = array();
 	
 	/**
 	 * @var Stores the current position in the command line history.
 	 */
-	private $history_position = -1;
+	private $_history_position = -1;
 	
 	/**
 	 * @var Stores the data of the line the user is currently typing.
 	 */
-	private $buffer = '';
+	private $_buffer = '';
 	
 	/**
 	 * @var Whether debug information is printed to the terminal.
 	 */
-	private $debug = FALSE;
+	private $_debug = false;
 
 	/**
 	 * @var Stores current cursor position
 	 */
-	private $buffer_position = 0;
+	private $_buffer_position = 0;
 
 	/**
 	 * @var Name of the user-defined function that is called for autocompletion
 	 */
-	private $callbackAutocompleteFunction = NULL;
+	private $_autocomplete_callback = null;
 
 	/**
 	 * Resets buffer information and position.
 	 */
-	private function reset() {
+	private function _reset() {
 
 		// Reset buffer
-		$this->buffer = '';
-		$this->buffer_position = 0;
+		$this->_buffer = '';
+		$this->_buffer_position = 0;
 
 		// Reset working history
-		$this->history_tmp = $this->history;
-		$this->history_tmp[] = '';
-		$this->history_position = count($this->history);
+		$this->_history_tmp = $this->history;
+		$this->_history_tmp[] = '';
+		$this->_history_position = count($this->history);
 	}
 	
 	/**
@@ -72,14 +77,14 @@ class SimpleReadline {
 	 * @param string prompt You may specify a string with which to prompt the user.
 	 * @return Returns a single string from the user.
 	 */
-	public function readline($prompt=NULL) {
-	
-		$line = NULL;
+	public function readline($prompt=null)
+	{
+		$line = null;
 
-		$this->reset();
+		$this->_reset();
 	
 		// Output prompt
-		if ($prompt !== NULL) {
+		if ($prompt !== null) {
 			echo "\n" . $prompt;
 		}
 		
@@ -87,7 +92,7 @@ class SimpleReadline {
 		
 			$c = self::readKey();
 		
-			if ($this->debug) {
+			if ($this->_debug) {
 				echo "\ndebug: keypress:";
 				for ($i=0; $i<mb_strlen($c); $i++) echo " " . ord($c[$i]);
 				echo "\n";
@@ -95,8 +100,8 @@ class SimpleReadline {
 		
 			switch ($c) {
 
-				// NULL - unrecognised character
-				case NULL:
+				// null - unrecognised character
+				case null:
 					$this->bell();
 					break;
 
@@ -104,9 +109,9 @@ class SimpleReadline {
 				case chr(9):
 
 					// If autocompletion is registered, then do it
-					if ($this->callbackAutocompleteFunction !== NULL) {
+					if ($this->_autocomplete_callback !== null) {
 
-						$autocomplete_text = $this->callAutocomplete($this->buffer);
+						$autocomplete_text = $this->callAutocomplete($this->_buffer);
 
 						if (!empty($autocomplete_text)) {
 							$this->insertIntoBuffer($autocomplete_text);
@@ -123,28 +128,28 @@ class SimpleReadline {
 
 				// CTRL-A (Home) - move the cursor all the way to the left
 				case chr(1):
-					$this->cursorLeft($this->buffer_position);
+					$this->cursorLeft($this->_buffer_position);
 					break;
 
 				// CTRL-E (End) - move cursor all the way to the end
 				case chr(5):
-					$this->cursorRight(mb_strlen($this->buffer) - $this->buffer_position);
+					$this->cursorRight(mb_strlen($this->_buffer) - $this->_buffer_position);
 					break;
 				
 				// Line-delete - backspace from current position to beginning of line
 				case chr(21):
-					$this->backspace($this->buffer_position);
+					$this->backspace($this->_buffer_position);
 					break;
 
 				// Word-delete (CTRL-W)
 				case chr(23):
 
 					// Get previous word position
-					$prev_word_pos = $this->buffer_position-$this->getPreviousWordPos();
+					$prev_word_pos = $this->_buffer_position-$this->getPreviousWordPos();
 
 					// Delete word, unless we're at the start of the line, then bell
 					if ($prev_word_pos > 0) {
-						$this->backspace($this->buffer_position-$this->getPreviousWordPos());
+						$this->backspace($this->_buffer_position-$this->getPreviousWordPos());
 					} else {
 						$this->bell();
 					}
@@ -153,23 +158,23 @@ class SimpleReadline {
 
 				// CTRL-LEFT
 				case chr(27) . chr(91) . chr(53) . chr(68):
-					$this->cursorLeft($this->buffer_position-$this->getPreviousWordPos());
+					$this->cursorLeft($this->_buffer_position-$this->getPreviousWordPos());
 					break;
 
 				// CTRL-RIGHT
 				case chr(27) . chr(91) . chr(53) . chr(67):
-					$this->cursorRight($this->getNextWordPos()-$this->buffer_position);
+					$this->cursorRight($this->getNextWordPos()-$this->_buffer_position);
 					break;
 
 				case chr(3):	// CTRL-C
-						$line = $this->buffer . $c;
+						$line = $this->_buffer . $c;
 						break;
 
 				case chr(4):	// CTRL-D
 				
 					// Return current line immediately, with control character code on the end
-					if (mb_strlen($this->buffer) === 0) {
-						$line = $this->buffer . $c;
+					if (mb_strlen($this->_buffer) === 0) {
+						$line = $this->_buffer . $c;
 					}
 					// Unless there is data in the buffer
 					else {
@@ -211,7 +216,7 @@ class SimpleReadline {
 				case chr(10):
 
 					// Set the $line variable so we return below
-					$line = $this->buffer;
+					$line = $this->_buffer;
 					break;
 
 				// Normal character key - add it to the buffer, and temp history
@@ -227,73 +232,73 @@ class SimpleReadline {
 					$this->insertIntoBuffer($c);
 			}
 
-			if ($this->debug) {
-				echo "\ndebug: buffer length  : " . mb_strlen($this->buffer) . "\n";
-				echo "debug: buffer contents: " . $this->buffer . "\n";
-				echo "debug: buffer position: " . $this->buffer_position . "\n";
+			if ($this->_debug) {
+				echo "\ndebug: buffer length  : " . mb_strlen($this->_buffer) . "\n";
+				echo "debug: buffer contents: " . $this->_buffer . "\n";
+				echo "debug: buffer position: " . $this->_buffer_position . "\n";
 				
-				echo "\ndebug: history: position: " . $this->history_position . "\n";
-				echo "debug: history: item: " . $this->history_tmp[$this->history_position] . "\n";
+				echo "\ndebug: history: position: " . $this->_history_position . "\n";
+				echo "debug: history: item: " . $this->_history_tmp[$this->_history_position] . "\n";
 			}
 
 			// If line has been set, we're ready to do something with this command
-			if ($line !== NULL) {
+			if ($line !== null) {
 			
 				// Firstly check for and process internal SimpleReadline commands
 				if ($this->processInternalCommand(trim($line))) {
 
 					// Command was executed, so add it to history, reset and start again
 					$this->addHistoryItem($line);
-					$line = NULL;
-					$this->reset();
+					$line = null;
+					$this->_reset();
 				}
 
 				// Remove temp history item
-				array_pop($this->history_tmp);
+				array_pop($this->_history_tmp);
 
 				return $line;
 			}
 		}
 	}
 
-	private function insertIntoBuffer($c) {
-
+	private function insertIntoBuffer($c)
+	{
 		// If the cursor is in the middle of the line...
-		if ($this->buffer_position < mb_strlen($this->buffer)) {
+		if ($this->_buffer_position < mb_strlen($this->_buffer)) {
 
-			$head = mb_substr($this->buffer, 0, $this->buffer_position);
-			$tail = mb_substr($this->buffer, $this->buffer_position, mb_strlen($this->buffer));
+			$head = mb_substr($this->_buffer, 0, $this->_buffer_position);
+			$tail = mb_substr($this->_buffer, $this->_buffer_position, mb_strlen($this->_buffer));
 
 			ob_start();
 			echo $c . $tail;
 			TerminalDisplay::left(mb_strlen($tail));
-			$this->buffer = $head . $c . $tail;
+			$this->_buffer = $head . $c . $tail;
 			ob_end_flush();
 
 		} else {
 
 			// Otherwise just append/echo it don't worry about the other stuff
-			$this->buffer .= $c;
+			$this->_buffer .= $c;
 			echo $c;	// User's terminal must take care of multibyte characters
 		}
 
-		$this->buffer_position = $this->buffer_position + mb_strlen($c);
-		$this->history_tmp[$this->history_position] = $this->buffer;
+		$this->_buffer_position = $this->_buffer_position + mb_strlen($c);
+		$this->_history_tmp[$this->_history_position] = $this->_buffer;
 	}
 
-	private function processInternalCommand($command) {
-
+	private function processInternalCommand($command)
+	{
 		// debug command
 		if (mb_substr($command, 0, 6) === "\debug") {
 
-			if ($this->debug) {
+			if ($this->_debug) {
 				echo "\ndebug mode off.\n";
-				$this->debug = FALSE;
+				$this->_debug = false;
 
 			} else {
 
 				echo "\ndebug mode on.\n";
-				$this->debug = TRUE;
+				$this->_debug = true;
 			}
 			
 			return true;
@@ -322,10 +327,10 @@ class SimpleReadline {
 	 *
 	 * @return Returns a string containing a character or set of control characters.
 	 */
-	public static function readKey() {
-	
-		$buffer = NULL;
-		$key = NULL;
+	public static function readKey()
+	{
+		$buffer = null;
+		$key = null;
 
 		while (1) {
 
@@ -353,10 +358,10 @@ class SimpleReadline {
 			}
 
 			// Safeguard in case isValidChar() fails - UTF-8 characters will never be
-			// more than 4 bytes. Something's gone wrong, so return NULL
+			// more than 4 bytes. Something's gone wrong, so return null
 			//
 			if (strlen($buffer) > 4) {
-				return NULL;
+				return null;
 			}
 		}
 	}
@@ -365,13 +370,14 @@ class SimpleReadline {
 	 * Checks a sequence of bytes and returns whether or not that sequence form a
 	 * valid character under the current encoding.
 	 */
-	public static function isValidChar($sequence) {
+	public static function isValidChar($sequence)
+	{
 
 		$encoding = mb_internal_encoding();
 
 		// Check for bad byte stream
-		if (mb_check_encoding($sequence) === FALSE) {
-			return FALSE;
+		if (mb_check_encoding($sequence) === false) {
+			return false;
 		}
 
 		// Check for bad byte sequence
@@ -379,26 +385,28 @@ class SimpleReadline {
 		$ts = $encoding == 'UTF-32' ? 'UTF-8' : $encoding;
 
 		if ($sequence !== mb_convert_encoding(mb_convert_encoding($sequence, $fs, $ts), $ts, $fs)) {
-			return FALSE;
+			return false;
 		}
 
-		return TRUE;
+		return true;
 	}
 	
 	/**
 	 * Adds a line to the command line history.
 	 *
 	 * @param string The line to be added in the history.
-	 * @return bool Returns TRUE on success or FALSE on failure.
+	 * @return bool Returns true on success or false on failure.
 	 */
-	public function addHistoryItem($line) {
+	public function addHistoryItem($line)
+	{
 		return ($this->history[] = trim($line));
 	}
 
 	/**
 	 * Alias of addHistoryItem for historical purposes.
 	 */	
-	public function readline_add_history($line) {
+	public function readline_add_history($line)
+	{
 		return $this->addHistoryItem($line);
 	}
 
@@ -407,10 +415,10 @@ class SimpleReadline {
 	 *
 	 * @param Integer specifying how many places to move up/down in the history
 	 */
-	private function historyMovePosition($n) {
-
+	private function historyMovePosition($n)
+	{
 		// Check we can actually move this far
-		if (!array_key_exists($this->history_position + $n, $this->history_tmp)) {
+		if (!array_key_exists($this->_history_position + $n, $this->_history_tmp)) {
 		
 			return false;
 
@@ -419,16 +427,16 @@ class SimpleReadline {
 			ob_start();
 
 			// Clear current line
-			$this->cursorRight(mb_strlen($this->buffer) - $this->buffer_position);
-			$this->backspace($this->buffer_position);
+			$this->cursorRight(mb_strlen($this->_buffer) - $this->_buffer_position);
+			$this->backspace($this->_buffer_position);
 
 			// Move forward/back n number of positions
-			$this->history_position = $this->history_position + $n;
+			$this->_history_position = $this->_history_position + $n;
 	
 			// Print history item and set buffer
-			echo $this->history_tmp[$this->history_position];
-			$this->buffer = $this->history_tmp[$this->history_position];
-			$this->buffer_position = mb_strlen($this->buffer);
+			echo $this->_history_tmp[$this->_history_position];
+			$this->_buffer = $this->_history_tmp[$this->_history_position];
+			$this->_buffer_position = mb_strlen($this->_buffer);
 
 			ob_end_flush();
 
@@ -440,8 +448,9 @@ class SimpleReadline {
 	/**
 	 * Updates the current history item with new data from buffer
 	 */
-	private function history_item_modified() {
-		$this->history_tmp[$this->history_position] = $this->buffer;
+	private function history_item_modified()
+	{
+		$this->_history_tmp[$this->_history_position] = $this->_buffer;
 	}
 
 	/**
@@ -449,12 +458,12 @@ class SimpleReadline {
 	 *
 	 * @param The number of characters left to move the cursor.
 	 */
-	private function cursorLeft($n=1) {
-
+	private function cursorLeft($n=1)
+	{
 		// Move cursor left if we can
-		if ($this->buffer_position > 0) {
+		if ($this->_buffer_position > 0) {
 
-			$this->buffer_position = $this->buffer_position - $n;
+			$this->_buffer_position = $this->_buffer_position - $n;
 			TerminalDisplay::left($n);
 
 			return true;
@@ -470,13 +479,13 @@ class SimpleReadline {
 	 * @param Number of characters to the right to move the cursor.
 	 * @return boolean Whether or not the cursor was able to be moved to the right
 	 */
-	private function cursorRight($n=1) {
-
-		if ($this->buffer_position < mb_strlen($this->buffer)) {
+	private function cursorRight($n=1)
+	{
+		if ($this->_buffer_position < mb_strlen($this->_buffer)) {
 
 			for ($i=0; $i<$n; $i++) {
-				echo mb_substr($this->buffer, $this->buffer_position, 1);
-				$this->buffer_position++;
+				echo mb_substr($this->_buffer, $this->_buffer_position, 1);
+				$this->_buffer_position++;
 			}
 
 			return true;
@@ -493,9 +502,9 @@ class SimpleReadline {
 	 *
 	 * @param int count The number of characters to backspace.
 	 */
-	private function backspace($n=1) {
-
-		if ($this->buffer_position < $n) {
+	private function backspace($n=1)
+	{
+		if ($this->_buffer_position < $n) {
 		
 			// We can't backspace this far
 			return false;
@@ -505,26 +514,26 @@ class SimpleReadline {
 		ob_start();
 
 		for ($i=0; $i<$n; $i++) {
-			if ($this->buffer_position < mb_strlen($this->buffer)) {
+			if ($this->_buffer_position < mb_strlen($this->_buffer)) {
 	
-				$head = mb_substr($this->buffer, 0, $this->buffer_position);
-				$tail = mb_substr($this->buffer, $this->buffer_position, mb_strlen($this->buffer));
+				$head = mb_substr($this->_buffer, 0, $this->_buffer_position);
+				$tail = mb_substr($this->_buffer, $this->_buffer_position, mb_strlen($this->_buffer));
 				
 				TerminalDisplay::backspace();
 				echo $tail . ' ';
 				TerminalDisplay::left(mb_strlen($tail)+1);
 				
 				// Update buffer
-				$this->buffer = mb_substr($head, 0, mb_strlen($head)-1) . $tail;
+				$this->_buffer = mb_substr($head, 0, mb_strlen($head)-1) . $tail;
 			}
 			else {
 	
 				// Just backspace one char
-				$this->buffer = mb_substr($this->buffer, 0, mb_strlen($this->buffer)-1);
+				$this->_buffer = mb_substr($this->_buffer, 0, mb_strlen($this->_buffer)-1);
 				TerminalDisplay::backspace();
 			}
 	
-			$this->buffer_position--;
+			$this->_buffer_position--;
 		}
 
 		ob_end_flush();
@@ -537,9 +546,9 @@ class SimpleReadline {
 	 *
 	 * @return integer the position of the first character of the previous word
 	 */
-	private function getPreviousWordPos() {
-
-		$temp_str = mb_substr($this->buffer, 0, $this->buffer_position);
+	private function getPreviousWordPos()
+	{
+		$temp_str = mb_substr($this->_buffer, 0, $this->_buffer_position);
 
 		// Remove trailing spaces on the end
 		$temp_str = rtrim($temp_str);
@@ -563,9 +572,9 @@ class SimpleReadline {
 	 *
 	 * @return integer the position of the first character of the next word
 	 */
-	private function getNextWordPos() {
-
-		$temp_str = mb_substr($this->buffer, $this->buffer_position, mb_strlen($this->buffer));
+	private function getNextWordPos()
+	{
+		$temp_str = mb_substr($this->_buffer, $this->_buffer_position, mb_strlen($this->_buffer));
 
 		// Store length, so we can calculate how many spaces are trimmed in the next step
 		$temp_str_len = mb_strlen($temp_str);
@@ -580,10 +589,10 @@ class SimpleReadline {
 		$next_word_pos = mb_strpos($temp_str, ' ');
 
 		// If there is no matching space, we're at the end of the string
-		if ($next_word_pos === FALSE) {
-			$next_word_pos = mb_strlen($this->buffer);
+		if ($next_word_pos === false) {
+			$next_word_pos = mb_strlen($this->_buffer);
 		} else {
-			$next_word_pos = $this->buffer_position + $trimmed_spaces + $next_word_pos;
+			$next_word_pos = $this->_buffer_position + $trimmed_spaces + $next_word_pos;
 		}
 
 		return $next_word_pos;
@@ -592,7 +601,8 @@ class SimpleReadline {
 	/**
 	 * Make the screen beep.
 	 */
-	public static function bell() {
+	public static function bell()
+	{
 		echo chr(7);
 	}
 
@@ -603,24 +613,25 @@ class SimpleReadline {
 	 *
 	 * @param $f callback the function to call for autocompletion
 	 */
-	public function registerAutocompleteFunc($f) {
-		$this->callbackAutocompleteFunction = $f;
+	public function registerAutocompleteFunc($f)
+	{
+		$this->_autocomplete_callback = $f;
 	}
 
 	/**
 	 * Calls user-defined autocomplete function to complete the current string.
 	 */
-	public function callAutocomplete($hint) {
-
-		if ($this->callbackAutocompleteFunction === NULL) {
-			return FALSE;
+	public function callAutocomplete($hint)
+	{
+		if ($this->_autocomplete_callback === null) {
+			return false;
 		}
 
 		// Get available string tail matches
-		$matches = call_user_func($this->callbackAutocompleteFunction, $hint);
+		$matches = call_user_func($this->_autocomplete_callback, $hint);
 
 		if (empty($matches)) {
-			return FALSE;
+			return false;
 		}
 
 		// If there's only one match, return it, along with a space on the end
@@ -630,7 +641,7 @@ class SimpleReadline {
 
 		// At the moment, we only support in-line autocompletion
 		if ($matches[0] === "") {
-			return FALSE;
+			return false;
 		}
 
 		// Otherwise, let's complete as many common letters as we can...
@@ -664,22 +675,5 @@ class SimpleReadline {
 
 		return $finalAutocompleteString;
 	}
-}
-
-class TerminalDisplay {
-
-	public static function left($count=1) {
-		for ($i=0; $i<$count; $i++) echo chr(8);
-	}
-	
-	public static function backspace($count=1) {
-		self::left($count);
-		for ($i=0; $i<$count; $i++) echo ' ';
-		self::left($count);
-	}
-}
-
-function sortArrayByLength($a,$b){
-	return count($a)-count($b);
 }
 ?>

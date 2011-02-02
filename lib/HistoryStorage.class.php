@@ -1,90 +1,109 @@
 <?php
 /**
- * Stores/retrieves lines in a file.
+ * Stores an array in memory, and reads/writes that array as lines in a file.
  *
- * @author Daniel Simmons <dan@dans.im>
- * @copyright Copyright (C) 2010 Daniel Simmons
+ * @author    Daniel Simmons <dan@dans.im>
+ * @copyright 2011 Daniel Simmons
  */
-class HistoryStorage {
-
+class HistoryStorage
+{
 	/**
 	 * @var Path and filename of the file on disk to save the data
 	 */
-	private $file = '';
+	private $_file = '';
 	
 	/**
 	 * @var Array of the data
 	 */
-	private $data = array();
+	private $_data = array();
 	
 	/**
-	 * @var Boolean indicating whether the data in the memory should be saved to file on destruction
+	 * @var Boolean whether the data in the memory should be saved to file on
+	 *              destruction
 	 */
-	private $autosave = FALSE;
+	private $_autosave = false;
 
 	/**
 	 * @var integer the maximum number of items that will be saved to file
 	 */
-	private $maxsize = 500;
+	private $_maxsize = 500;
 
 	/**
 	 * Constructor
+	 *
+	 * @param string  $file     path and filename where history should be saved
+	 * @param boolean $autosave whether to save history items to file on destruct
 	 */
-	function __construct($file, $autosave=FALSE) {
-		$this->file = $file;
-		$this->autosave = $autosave;
+	function __construct($file, $autosave=false)
+	{
+		$this->_file = $file;
+		$this->_autosave = $autosave;
 		$this->load();
 	}
 
 	/**
 	 * Destructor - writes data to file if autosave flag is true
 	 */
-	function __destruct() {
-		if ($this->autosave) {
+	function __destruct()
+	{
+		if ($this->_autosave) {
 			$this->save();
 		}
 	}
 
 	/**
 	 * Reads lines from the file into memory.
+	 *
+	 * @return mixed the data from the file, or false if the file couldn't be read
 	 */
-	function load() {
+	function load()
+	{
+		$data = @file($this->_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
-		$data = @file($this->file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
-		if ($data === FALSE) {
+		if ($data === false) {
 			return false;
 		} else {
-			$this->data = $data;
-			return $this->data;
+			$this->_data = $data;
+			return $this->_data;
 		}
 	}
 
 	/**
 	 * Saves contents of memory into file.
+	 *
+	 * @return mixed number of bytes that were written to the file, or false on
+	                 failure.
 	 */
-	function save() {
-
-		while (count($this->data) > $this->maxsize) {
-			array_shift($this->data);
+	function save()
+	{
+		while (count($this->_data) > $this->_maxsize) {
+			array_shift($this->_data);
 		}
 
-		return @file_put_contents($this->file, implode("\n", $this->data));
+		return @file_put_contents($this->_file, implode("\n", $this->_data));
 	}
 
 	/**
 	 * Returns an array of the data stored in memory.
+	 *
+	 * @return array get all data stored in memory
 	 */
-	function getData() {
-		return $this->data;
+	function getData()
+	{
+		return $this->_data;
 	}
 
 	/**
 	 * Updates the array stored in the memory.
+	 *
+	 * @param array $data the data to store
+	 *
+	 * @return mixed void or false if supplied data is not an array
 	 */
-	function setData($data) {
+	function setData($data)
+	{
 		if (is_array($data)) {
-			$this->data = $data;
+			$this->_data = $data;
 		} else {
 			return false;
 		}
@@ -92,17 +111,25 @@ class HistoryStorage {
 
 	/**
 	 * Sets the maximum number of lines that will be saved to file.
+	 *
+	 * @param integer $n number of lines
+	 *
+	 * @return void
 	 */
-	function setMaxSize($n) {
-		$this->maxsize = (int)$n;
+	function setMaxSize($n)
+	{
+		$this->_maxsize = (int)$n;
 	}
 
 	/**
 	 * Shows the the maximum number of lines that will be saved to file as per the
 	 * current configuration.
+	 *
+	 * @return integer the current max number of lines that will be saved
 	 */
-	function getMaxSize($n) {
-		return $this->maxsize;
+	function getMaxSize()
+	{
+		return $this->_maxsize;
 	}
 }
 ?>

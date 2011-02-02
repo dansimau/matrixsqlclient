@@ -12,7 +12,7 @@ class DbBackend {
 	/**
 	 * @var $backend instantiated plugin class
 	 */
-	private $backend;
+	private $_backend;
 
 	/**
 	 * Constructor
@@ -33,7 +33,7 @@ class DbBackend {
 			exit(20);
 		}
 
-		$this->backend = $backend;
+		$this->_backend = $backend;
 	}
 
 	/**
@@ -44,7 +44,7 @@ class DbBackend {
 	 */
 	public function connect($dsn) {
 		$this->disconnect();
-		return $this->backend->connect($dsn);
+		return $this->_backend->connect($dsn);
 	}
 
 	/**
@@ -53,15 +53,15 @@ class DbBackend {
 	 * @return string friendly name/identifier for the currently connected backend
 	 */
 	public function getDbName() {
-		return $this->backend->getDbName();
+		return $this->_backend->getDbName();
 	}
 
 	public function getDbType() {
-		return $this->backend->getDbType();
+		return $this->_backend->getDbType();
 	}
 
 	public function getDbVersion() {
-		return $this->backend->getDbVersion();
+		return $this->_backend->getDbVersion();
 	}
 
 	/**
@@ -70,7 +70,7 @@ class DbBackend {
 	 * @return bool if the disconnect was a success
 	 */
 	public function disconnect() {
-		return $this->backend->disconnect();
+		return $this->_backend->disconnect();
 	}
 
 	/**
@@ -81,7 +81,7 @@ class DbBackend {
 	public function execute($sql) {
 
 		$query_start_time = microtime(true);
-		$result = $this->backend->execute($sql);
+		$result = $this->_backend->execute($sql);
 		$query_end_time = microtime(true);
 
 		$this->_executionTime = $query_end_time - $query_start_time;
@@ -97,14 +97,14 @@ class DbBackend {
 	}
 
 	public function getTableNames() {
-		return $this->backend->getTableNames();
+		return $this->_backend->getTableNames();
 	}
 
 	/**
 	 * Checks to see if the current line matches an internal command.
 	 */
 	public function matchesMacro($s) {
-		return $this->backend->matchesMacro($s);
+		return $this->_backend->matchesMacro($s);
 	}
 }
 
