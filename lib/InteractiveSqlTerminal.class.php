@@ -50,7 +50,7 @@ class InteractiveSqlTerminal
 	public function __construct($backend)
 	{
 
-		$this->_resetTerminal(true);
+		$this->resetTerminal(true);
 
 		// Instantiate database backend plugin
 		$this->_db = new DbBackend($backend);
@@ -324,7 +324,7 @@ class InteractiveSqlTerminal
 	 *
 	 * @return void
 	 */
-	private function _resetTerminal($save_existing=false)
+	public function resetTerminal($save_existing=false)
 	{
 
 		// Save existing settings
