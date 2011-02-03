@@ -107,14 +107,12 @@ class ArrayToTextTable
     {
         if($return) ob_start(null, 0, true); 
   
-        $this->printLine();
+//        $this->printLine();
         $this->printHeading();
         
         $rc = count($this->rows);
         for($i=0; $i<$rc; $i++) $this->printRow($i);
         
-        $this->printLine(false);
-
         if($return) {
             $contents = ob_get_contents();
             ob_end_clean();
@@ -136,12 +134,20 @@ class ArrayToTextTable
 
     private function printLine($nl=true)
     {
-        print $this->pcen;
-        foreach($this->cs as $key => $val)
+//        print ' ';
+		$i = 0;
+        foreach($this->cs as $key => $val) {
             print $this->prow .
                 str_pad('', $val, $this->prow, STR_PAD_RIGHT) .
-                $this->prow .
-                $this->pcen;
+                $this->prow;
+                
+				if ($i < count($this->cs)-1) {
+	                print $this->pcen;
+	            } else {
+	            	print ' ';
+	            }
+	        	$i++;
+	    }
         if($nl) print "\n";
     }
 
@@ -149,12 +155,19 @@ class ArrayToTextTable
     {
         if(!is_array($this->head)) return false;
 
-        print $this->pcol;
-        foreach($this->cs as $key => $val)
+//		print ' ';
+		$i = 0;
+        foreach($this->cs as $key => $val) {
             print ' '.
                 str_pad($this->head[$key], $val, ' ', STR_PAD_BOTH) .
-                ' ' .
-                $this->pcol;
+                ' ';
+			if ($i < count($this->cs)-1) {
+                print $this->pcol;
+            } else {
+            	print ' ';
+            }
+        	$i++;
+        }
 
         print "\n";
         $this->printLine();
@@ -165,12 +178,16 @@ class ArrayToTextTable
         // loop through each line
         for($line=1; $line <= $this->rs[$rowKey]; $line++)
         {
-            print $this->pcol;  
+//            print ' ';
             for($colKey=0; $colKey < count($this->keys); $colKey++)
             { 
                 print " ";
                 print str_pad(substr($this->rows[$rowKey][$this->keys[$colKey]], ($this->mW * ($line-1)), $this->mW), $this->cs[$colKey], ' ', STR_PAD_RIGHT);
-                print " " . $this->pcol;          
+				if ($colKey < count($this->keys)-1) {
+	                print " " . $this->pcol;
+	            } else {
+	                print "  ";
+				}
             }  
             print "\n";
         }
