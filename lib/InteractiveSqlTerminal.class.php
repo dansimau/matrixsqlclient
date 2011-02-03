@@ -293,8 +293,21 @@ class InteractiveSqlTerminal
 		if (preg_match('/SELECT\s+.+\s+FROM\s+\w*$/i', $hint)) {
 			$candidates = $this->_db->getTableNames();
 
+		// Autocomplete table names after UPDATE
+		} elseif (preg_match('/UPDATE\s+\w*$/i', $hint)) {
+			$candidates = $this->_db->getTableNames();
+
+		// Autocomplete table names at INSERT INTO
+		} elseif (preg_match('/INSERT INTO\s+\w*$/i', $hint)) {
+			$candidates = $this->_db->getTableNames();
+
 		// Autocomplete column names after a WHERE
 		} elseif (preg_match('/SELECT\s+.+\s+FROM\s+(.+?)\s+WHERE\s+\w*$/i', $hint, $table_name_search)) {
+			$table_name = @$table_name_search[1];
+			$candidates = $this->_db->getColumnNames($table_name);
+
+		// Autocomplete column names at UPDATE..SET
+		} elseif (preg_match('/UPDATE\s+(.+?)\s+SET\s+\w*$/i', $hint, $table_name_search)) {
 			$table_name = @$table_name_search[1];
 			$candidates = $this->_db->getColumnNames($table_name);
 		}
