@@ -245,7 +245,7 @@ class InteractiveSqlTerminal
 
 				if ($this->_getOptionValue("timing")) {
     				// Output amount of time this query took
-    				$this->_addToLinesBuffer(array("", "Time: " . $this->_db->getQueryExecutionTime() . " ms"));
+					$this->_addToLinesBuffer(array("Time: " . $this->_db->getQueryExecutionTime() . " ms"));
     			}
 
     			// Output the data
