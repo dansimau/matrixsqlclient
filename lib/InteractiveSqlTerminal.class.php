@@ -219,7 +219,9 @@ class InteractiveSqlTerminal
 						$table = new ArrayToTextTable($source_data);
 						$table->showHeaders(true);
 
-						$this->_addToLinesBuffer(explode("\n", $table->render(true)));
+						$data = explode("\n", $table->render(true));
+						array_pop($data);
+						$this->_addToLinesBuffer($data);
 					}
 
 					// Build count summary (at end of table) and add to line buffer
