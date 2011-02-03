@@ -196,10 +196,13 @@ class InteractiveSqlTerminal
 
 				try {
 					// Run the SQL
+					$this->restoreTerminal();
 					$source_data = $this->_db->execute($sql);
 				}
 				catch (Exception $e) {
 					echo "\n" . $e->getMessage() . "\n";
+
+					$this->resetTerminal(true);
 
 					// Reset the prompt cause its a new query
 					$prompt = '=# ';
@@ -208,6 +211,8 @@ class InteractiveSqlTerminal
 					echo "\n";
 					continue;
 				}
+
+				$this->resetTerminal(true);
 
 				// If we get an array back, it's rows
 				if (is_array($source_data)) {
@@ -324,9 +329,8 @@ class InteractiveSqlTerminal
 	 *
 	 * @return void
 	 */
-	public function resetTerminal($save_existing=false)
+	public function resetTerminal($save_existing=true)
 	{
-
 		// Save existing settings
 		if ($save_existing) {
 			$this->_tty_saved = `stty -g`;
