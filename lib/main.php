@@ -7,6 +7,8 @@ if (function_exists("pcntl_signal")) {
 	{
 		global $matrixSqlTerminal;
 		switch ($signal) {
+			case SIGINT:
+				break;
 			case SIGCONT:
 				// Reset the terminal again when the process is unfrozen
 				$matrixSqlTerminal->resetTerminal();
@@ -14,6 +16,7 @@ if (function_exists("pcntl_signal")) {
 		}
 	}
 	pcntl_signal(SIGCONT, "sig_handler");
+	pcntl_signal(SIGINT, "sig_handler");
 }
 
 error_reporting(E_ALL);
