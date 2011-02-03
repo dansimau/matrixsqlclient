@@ -134,7 +134,7 @@ class SimpleReadline
 		
 		while (1) {
 		
-			$c = self::_readKey();
+			$c = self::readKey();
 		
 			switch ($c) {
 
@@ -295,6 +295,50 @@ class SimpleReadline
 				array_pop($this->_history_tmp);
 
 				return $line;
+			}
+		}
+	}
+
+	/**
+	 * Returns data from a keypress. This will either be a single character, or a set of control
+	 * characters.
+	 *
+	 * @return Returns a string containing a character or set of control characters.
+	 */
+	public static function readKey()
+	{
+		$buffer = null;
+		$key = null;
+
+		while (1) {
+
+			$c = fgetc(STDIN);
+
+			$buffer .= $c;
+
+			// Handle control characters
+			if (ord($buffer[0]) === 27) {
+
+				if ((strlen($buffer) === 1) && (ord($c) === 27)) {
+					continue;
+				} elseif ((strlen($buffer) === 2) && (ord($c) === 91)) {
+					continue;
+				} elseif (strlen($buffer) === 3 && ord($c) >= 30 && ord($c) <= 57) {
+					continue;
+				} else {
+					return $buffer;
+				}
+			}
+
+			// Handle other characters and multibyte characters
+			if (self::_isValidChar($buffer)) {
+				return $buffer;
+			}
+
+			// Safeguard in case isValidChar() fails - UTF-8 characters will never be
+			// more than 4 bytes. Something's gone wrong, so return null
+			if (strlen($buffer) > 4) {
+				return null;
 			}
 		}
 	}
@@ -658,50 +702,6 @@ class SimpleReadline
 		}
 
 		return $next_word_pos;
-	}
-
-	/**
-	 * Returns data from a keypress. This will either be a single character, or a set of control
-	 * characters.
-	 *
-	 * @return Returns a string containing a character or set of control characters.
-	 */
-	private static function _readKey()
-	{
-		$buffer = null;
-		$key = null;
-
-		while (1) {
-
-			$c = fgetc(STDIN);
-
-			$buffer .= $c;
-
-			// Handle control characters
-			if (ord($buffer[0]) === 27) {
-
-				if ((strlen($buffer) === 1) && (ord($c) === 27)) {
-					continue;
-				} elseif ((strlen($buffer) === 2) && (ord($c) === 91)) {
-					continue;
-				} elseif (strlen($buffer) === 3 && ord($c) >= 30 && ord($c) <= 57) {
-					continue;
-				} else {
-					return $buffer;
-				}
-			}
-
-			// Handle other characters and multibyte characters
-			if (self::_isValidChar($buffer)) {
-				return $buffer;
-			}
-
-			// Safeguard in case isValidChar() fails - UTF-8 characters will never be
-			// more than 4 bytes. Something's gone wrong, so return null
-			if (strlen($buffer) > 4) {
-				return null;
-			}
-		}
 	}
 
 	/**
