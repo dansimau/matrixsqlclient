@@ -96,11 +96,11 @@ class InteractiveSqlTerminal
 		$sql = '';
 
 		ob_start();
-		echo "Welcome to matrixsqlclient (alpha";
+		echo "Welcome to matrixsqlclient";
 		if (!empty($GLOBALS['rev'])) {
-			echo ", rev " . $GLOBALS['rev'];
+			echo " (" . $GLOBALS['rev'] . ")";
 		}
-		echo "), the interactive database terminal in PHP.";
+		echo ", the interactive database terminal in PHP.";
 		echo "\n\nYou are now connected.";
 		echo "\nDatabase type: " . $this->_db->getDbType() . $this->_db->getDbVersion() . ".\n\n";
 		ob_end_flush();

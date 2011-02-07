@@ -366,6 +366,10 @@ class SimpleReadline
 	 */
 	public function writeHistory($filename)
 	{
+		if (get_class($this->_history_storage) !== "HistoryStorage") {
+			return false;
+		}
+
 		$this->_history_storage->setData($this->_history);
 
 		if ($this->_history_storage->save() !== false) {
