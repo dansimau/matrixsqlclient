@@ -25,8 +25,16 @@ error_reporting(E_ALL);
 mb_internal_encoding("UTF-8");
 
 // Run the terminal
-$matrixSqlTerminal = new InteractiveSqlTerminal('MatrixDAL');
-$matrixSqlTerminal->connect($_SERVER['argv'][1]);
-$matrixSqlTerminal->setOption("HISTFILE", "~/.matrixsqlclient_history");
-$matrixSqlTerminal->run();
+try {
+	$matrixSqlTerminal = new InteractiveSqlTerminal('MatrixDAL');
+	$matrixSqlTerminal->connect($_SERVER['argv'][1]);
+	$matrixSqlTerminal->setOption("HISTFILE", "~/.matrixsqlclient_history");
+	$matrixSqlTerminal->run();
+}
+catch (Exception $e) {
+	// If there is some kind of problem, try to ensure the terminal is reset
+	// for the user.
+	`stty sane`;
+	$matrixSqlTerminal->restoreTerminal();
+}
 ?>

@@ -22,7 +22,7 @@ class InteractiveSqlTerminal
 	/**
 	 * @var $_tty_saved Stores stty string of saved terminal settings
 	 */
-	private $_tty_saved = '';
+	private $_tty_saved = 'sane';
 
 	/**
 	 * @var $_shell SimpleReadline object
