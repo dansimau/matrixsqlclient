@@ -3,7 +3,9 @@
  * Stores an array in memory, and reads/writes that array as lines in a file.
  *
  * @author    Daniel Simmons <dan@dans.im>
- * @copyright 2011 Daniel Simmons
+ * @link      https://github.com/dansimau/matrixsqlclient
+ * @copyright 2010 Daniel Simmons
+ * @license   http://www.opensource.org/licenses/mit-license.php
  */
 class HistoryStorage
 {

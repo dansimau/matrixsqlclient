@@ -3,7 +3,9 @@
  * MatrixDAL (Squiz Matrix) backend for DbBackend.
  *
  * @author    Daniel Simmons <dan@dans.im>
+ * @link      https://github.com/dansimau/matrixsqlclient
  * @copyright 2010 Daniel Simmons
+ * @license   http://www.opensource.org/licenses/mit-license.php
  */
 class DbBackend_MatrixDAL extends DbBackendPlugin
 {

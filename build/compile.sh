@@ -15,8 +15,17 @@ cat <<EOF >>$TMPFILE
 <?php
 /**
  * matrixsqlclient.php - Interactive database terminal in PHP.
+ * https://github.com/dansimau/matrixsqlclient
  *
- * dsimmons@squiz.co.uk
+ * Copyright 2011, Daniel Simmons <dan@dans.im>
+ *
+ * Licensed under the MIT license.
+ * http://opensource.org/licenses/mit-license.php
+ *
+ * Contains Array to Text Table Generation Class, copyright 2009 Tony Landis.
+ * Licensed under the BSD license.
+ * http://www.opensource.org/licenses/bsd-license.php
+ *
  * $DATE (rev $REV)
  *
  */

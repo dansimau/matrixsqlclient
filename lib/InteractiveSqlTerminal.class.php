@@ -3,7 +3,9 @@
  * SQL client - the main class.
  *
  * @author    Daniel Simmons <dan@dans.im>
+ * @link      https://github.com/dansimau/matrixsqlclient
  * @copyright 2010 Daniel Simmons
+ * @license   http://www.opensource.org/licenses/mit-license.php
  */
 class InteractiveSqlTerminal
 {
