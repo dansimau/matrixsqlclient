@@ -1,4 +1,13 @@
 <?php
+/**
+ * Alternative readline library.
+ *
+ * @author    Daniel Simmons <dan@dans.im>
+ * @link      https://github.com/dansimau/matrixsqlclient
+ * @copyright 2010 Daniel Simmons
+ * @license   http://www.opensource.org/licenses/mit-license.php
+ */
+
 function sortArrayByLength($a,$b)
 {
 	return count($a)-count($b);
@@ -11,12 +20,6 @@ define('LEFT', chr(27).chr(91).chr(68));
 
 //system("stty raw opost -ocrnl onlcr -onocr -onlret icrnl -inlcr -echo isig intr undef");
 
-/**
- * Alternative readline library.
- *
- * @author    Daniel Simmons <dan@dans.im>
- * @copyright 2010 Daniel Simmons
- */
 class SimpleReadline
 {
 	/**
