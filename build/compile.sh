@@ -29,7 +29,7 @@ cat <<EOF >>$TMPFILE
  * $DATE (rev $REV)
  *
  */
-\$rev = "version 1.0, r$REV";
+\$rev = "version 1.01, r$REV";
 
 EOF
 
