@@ -39,8 +39,15 @@ class InteractiveSqlTerminal
 		'HISTFILE' => '~/.phpsqlc_history',
 		'HISTSIZE' => 500,
 		'timing' => "off",
-		'disable-completion' => "off"
+		'disable-completion' => "off",
+		'rowlimit' => 500,
 	);
+
+	/**
+	 * @var $_cancel flag indicating whether the current query has been requested
+	 *               to be cancelled.
+	 */
+	private $_cancel = false;
 
 	/**
 	 * Constructor - initialises Matrix DAL and attempts to connect to database
@@ -49,7 +56,6 @@ class InteractiveSqlTerminal
 	 */
 	public function __construct($backend)
 	{
-
 		$this->resetTerminal(true);
 
 		// Instantiate database backend plugin
@@ -69,6 +75,14 @@ class InteractiveSqlTerminal
 	{
 		$this->_shell->writeHistory($this->_historyFile);
 		$this->restoreTerminal();
+	}
+
+	/**
+	 * Attempt to cancel a currently-running query.
+	 */
+	public function cancel() {
+		echo "Cancel request\n";
+		$this->_cancel = true;
 	}
 
 	/**
@@ -106,7 +120,7 @@ class InteractiveSqlTerminal
 		ob_end_flush();
 		
 		while (1) {
-		
+
 			// Prompt for input
 			$line = $this->_shell->readline($this->_db->getDbName() . $prompt);
 
@@ -197,7 +211,7 @@ class InteractiveSqlTerminal
 				try {
 					// Run the SQL
 					$this->restoreTerminal();
-					$source_data = $this->_db->execute($sql);
+					$source_data = @$this->_db->execute($sql);
 				}
 				catch (Exception $e) {
 					echo "\n" . $e->getMessage() . "\n";
@@ -214,8 +228,28 @@ class InteractiveSqlTerminal
 
 				$this->resetTerminal(true);
 
+				// If cancel request was triggered then just discard anything that might
+				// come back
+				if ($this->_cancel) {
+					$source_data = null;
+					$this->_cancel = false;
+
+					echo "Cancelled\n";
+
+					$prompt = '=# ';
+					$sql = '';
+					continue;
+				}
+
 				// If we get an array back, it's rows
 				if (is_array($source_data)) {
+
+					$rowlimit = (int)$this->_getOptionValue("rowlimit");
+
+					if (count($source_data) > $rowlimit) {
+						$this->_addToLinesBuffer(explode("\n", "\n\nWARNING: Number of rows returned exceeded rowlimit.\nOnly the first $rowlimit rows are being shown. Use \set rowlimit <num> to adjust.\n\n"));
+						$source_data = array_slice($source_data, 0, $rowlimit);
+					}
 
 					// Only render the table if rows were returned
 					if (!empty($source_data)) {

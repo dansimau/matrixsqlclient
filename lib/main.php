@@ -8,6 +8,8 @@ if (function_exists("pcntl_signal")) {
 		global $matrixSqlTerminal;
 		switch ($signal) {
 			case SIGINT:
+				// Tell SQL client to cancel what it's doing
+				$matrixSqlTerminal->cancel();
 				break;
 			case SIGCONT:
 				// Reset the terminal again when the process is unfrozen
