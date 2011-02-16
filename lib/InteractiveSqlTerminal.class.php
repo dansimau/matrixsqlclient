@@ -43,6 +43,7 @@ class InteractiveSqlTerminal
 		'timing' => "off",
 		'disable-completion' => "off",
 		'rowlimit' => 500,
+		'pager' => 'on',
 	);
 
 	/**
@@ -420,7 +421,7 @@ class InteractiveSqlTerminal
 			// Get current terminal size
 			$tty_size = $this->_getTtySize();
 
-			if (count($this->_output_buffer) < $tty_size[0]) {
+			if (!(bool)$this->_getOptionValue("pager") === true || count($this->_output_buffer) < $tty_size[0]) {
 
 				// Print all lines, if it fits on the tty
 				$this->_printLines(count($this->_output_buffer));
