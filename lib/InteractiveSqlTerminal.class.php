@@ -94,7 +94,7 @@ class InteractiveSqlTerminal
 	 *
 	 * @return true on success or false on failure
 	 */
-	public function connect($dsn)
+	public function connect($dsn='')
 	{
 		return $this->_db->connect($dsn);
 	}

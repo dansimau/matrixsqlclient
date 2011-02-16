@@ -8,3 +8,6 @@ test:
 
 clean:
 	rm -f matrixsqlclient.php
+
+facebook:
+	build/compile-facebook.sh
