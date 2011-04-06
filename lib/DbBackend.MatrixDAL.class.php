@@ -94,7 +94,12 @@ class DbBackend_MatrixDAL extends DbBackendPlugin
 	 */
 	public function getDbName()
 	{
-		return $this->_dsn['DSN'];
+		$dsn = trim($this->_dsn['DSN']);
+		if (mb_strlen($dsn) >= 40) {
+			return 'matrix';
+		} else {
+			return $dsn;
+		}
 	}
 
 	/**
