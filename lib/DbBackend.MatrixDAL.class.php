@@ -94,9 +94,10 @@ class DbBackend_MatrixDAL extends DbBackendPlugin
 	 */
 	public function getDbName()
 	{
+		// Shorten the DB name if Oracle is using the full specifier
 		$dsn = trim($this->_dsn['DSN']);
-		if (mb_strlen($dsn) >= 40) {
-			return 'matrix';
+		if (preg_match("/SERVICE_NAME/i", $dsn)) {
+			return preg_replace("/\A.*HOST\s*=\s*(.*?)\).*SERVICE_NAME\s*=\s*(.*?)\).*\z/i", '$2 on $1', $dsn);
 		} else {
 			return $dsn;
 		}
