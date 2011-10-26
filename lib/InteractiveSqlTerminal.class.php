@@ -43,7 +43,7 @@ class InteractiveSqlTerminal
 		'timing' => "off",
 		'disable-completion' => "off",
 		'rowlimit' => 500,
-		'pager' => 'more',
+		'pager' => 'on',
 	);
 
 	/**
@@ -398,20 +398,114 @@ class InteractiveSqlTerminal
 	 *
 	 * @return void
 	 */
-	private function _printLines()
+	private function _printLines($n=0)
 	{
-		$tty_size = $this->_getTtySize();
 
-		// Determine whether we need to use the pager or not
-		if (count($this->_output_buffer) > $tty_size[0] && $this->_getOptionValue("pager") !== false) {
-			$handle = popen($this->_getOptionValue("pager"), "w");
+		$lines_printed = array();
+
+		if ($n > 0) {
+
+			// Print a specific number of lines
+			$line_buffer_len = count($this->_output_buffer);
+			for ($i=0; $i<$line_buffer_len && $i<$n; $i++) {
+				$line = array_shift($this->_output_buffer);
+				echo $line;
+				$lines_printed[] = $line;
+			}
+
+			// Return the lines printed
+			return $lines_printed;
+
 		} else {
-			$handle = fopen('php://stdout', 'w');
-		}
 
-		// Output lines in the buffer
-		foreach ($this->_output_buffer as $line) {
-			fwrite($handle, array_shift($this->_output_buffer) . "\n");
+			// Get current terminal size
+			$tty_size = $this->_getTtySize();
+
+			if (!(bool)$this->_getOptionValue("pager") === true || count($this->_output_buffer) < $tty_size[0]) {
+
+				// Print all lines, if it fits on the tty
+				$this->_printLines(count($this->_output_buffer));
+
+			} else {
+
+				// Otherwise, let's paginate...
+
+				// Print first chunk
+				$last_lines = $this->_printLines($tty_size[0]-1);
+				if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") {
+					echo "\n";
+				}
+				echo "\033[30;47m" . "--More--" . "\033[0m";
+
+				// Print rest of the chunks
+				while (1) {
+
+					// Stop printing chunks if the line buffer is empty
+					if (!count($this->_output_buffer) > 0) {
+						// Backspace the "--More--"
+						Terminal::backspace(8);
+						break;
+					}
+
+					// Read user input
+					$c = SimpleReadline::readKey();
+
+					switch ($c) {
+
+						// 'G' -- print rest of all the output
+						case chr(71):
+							Terminal::backspace(8);
+							$this->_printLines(count($this->_output_buffer));
+							break;
+
+						// User wants more lines, one at a time
+						case chr(10):
+
+							// Backspace the "--More--"
+							Terminal::backspace(8);
+
+							$last_lines = $this->_printLines(1);
+							if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") {
+								echo "\n";
+							}
+							echo "\033[30;47m" . "--More--" . "\033[0m";
+
+							break;
+
+						// Page down
+						case chr(32):
+						case chr(122):
+
+							// Backspace the "--More--"
+							Terminal::backspace(8);
+
+							$last_lines = $this->_printLines($tty_size[0]-1);
+							if ($last_lines[count($last_lines)-1][mb_strlen($last_lines[count($last_lines)-1])-1] != "\n") {
+								echo "\n";
+							}
+							echo "\033[30;47m" . "--More--" . "\033[0m";
+
+							break;
+
+						// User wants to end output (ie. 'q', CTRL+C)
+						case chr(3):
+						case chr(113):
+
+							// Backspace the "--More--"
+							Terminal::backspace(8);
+
+							// Clear line buffer
+							$this->_clearLineBuffer();
+
+							return;
+							break;
+
+						default:
+							Terminal::bell();
+							continue;
+					}
+				}
+			}
 		}
 	}
 
@@ -424,7 +518,20 @@ class InteractiveSqlTerminal
 	 */
 	private function _addToLinesBuffer($data)
 	{
-		$this->_output_buffer = array_merge($this->_output_buffer, $data);
+		// Get current terminal size
+		$tty_size = $this->_getTtySize();
+
+		// Loop through data so we can split lines at terminal size
+		for ($i=0; $i<count($data); $i++) {
+
+			// Add newlines to the end of each proper line
+			$data[$i] .= "\n";
+
+			// Split line at terminal width and add to output
+			foreach (str_split($data[$i], (int)$tty_size[1]) as $line) {
+				$this->_output_buffer[] = $line;
+			}
+		}
 	}
 
 	/**
